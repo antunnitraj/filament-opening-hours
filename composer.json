@@ -1,0 +1,68 @@
+{
+    "name": "karaodin/filament-opening-hours",
+    "description": "A Filament plugin for managing business opening hours with timezone support and exceptions",
+    "keywords": [
+        "filament",
+        "laravel",
+        "opening-hours",
+        "business-hours",
+        "spatie"
+    ],
+    "homepage": "https://github.com/karaOdin/filament-opening-hours",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nihat Mahdi",
+            "email": "nihatmahdi@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "filament/filament": "^3.0",
+        "spatie/laravel-package-tools": "^1.15.0",
+        "spatie/opening-hours": "^3.0",
+        "illuminate/contracts": "^10.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0",
+        "nunomaduro/collision": "^7.9",
+        "orchestra/testbench": "^8.0",
+        "pestphp/pest": "^2.0",
+        "pestphp/pest-plugin-arch": "^2.0",
+        "pestphp/pest-plugin-laravel": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "KaraOdin\\FilamentOpeningHours\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "KaraOdin\\FilamentOpeningHours\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "KaraOdin\\FilamentOpeningHours\\OpeningHoursServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
