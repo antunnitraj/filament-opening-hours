@@ -90,7 +90,7 @@ public static function form(Form $form): Form
 ### 4. Display in Tables
 
 ```php
-use KaraOdin\FilamentOpeningHours\Components\OpeningHoursTable;
+use KaraOdin\FilamentOpeningHours\Components\OpeningHoursColumn;
 
 public static function table(Table $table): Table
 {
@@ -98,10 +98,19 @@ public static function table(Table $table): Table
         ->columns([
             // ... other columns
             
-            OpeningHoursTable::make('opening_hours')
-                ->label('Status')
-                ->showStatus() // Shows "Open until 17:00" or "Closed until 09:00"
-                ->timezone('Africa/Algiers'),
+            // Option 1: Show current status (default)
+            OpeningHoursColumn::make('status')
+                ->label('Status'),
+                
+            // Option 2: Show today's hours
+            OpeningHoursColumn::make('today_hours')
+                ->label('Today')
+                ->showToday(),
+                
+            // Option 3: Simple open/closed
+            OpeningHoursColumn::make('simple_status')
+                ->label('Open')
+                ->showSimpleStatus(),
         ]);
 }
 ```
@@ -109,7 +118,7 @@ public static function table(Table $table): Table
 ### 5. Display in Infolists
 
 ```php
-use KaraOdin\FilamentOpeningHours\Components\OpeningHoursInfolist;
+use KaraOdin\FilamentOpeningHours\Components\OpeningHoursEntry;
 
 public static function infolist(Infolist $infolist): Infolist
 {
@@ -117,10 +126,19 @@ public static function infolist(Infolist $infolist): Infolist
         ->schema([
             // ... other entries
             
-            OpeningHoursInfolist::make('opening_hours')
-                ->label('Opening Hours')
-                ->showStatus() // Shows current status
-                ->showExceptions(), // Shows exceptions/holidays
+            // Option 1: Full details (default)
+            OpeningHoursEntry::make('opening_hours')
+                ->label('Opening Hours'),
+                
+            // Option 2: Status only
+            OpeningHoursEntry::make('status')
+                ->label('Current Status')
+                ->showStatusOnly(),
+                
+            // Option 3: Weekly hours only
+            OpeningHoursEntry::make('hours')
+                ->label('Weekly Hours')
+                ->showWeeklyHours(),
         ]);
 }
 ```
@@ -197,29 +215,36 @@ return [
 ];
 ```
 
-## Form Component Options
+## Component Options
 
+### Form Component
 ```php
-OpeningHoursForm::make('opening_hours')
-    ->timezone('Africa/Algiers') // Set specific timezone
+// Simple usage - returns array of components
+...OpeningHoursForm::make()
 ```
 
-## Table Component Options
-
+### Table Column Options
 ```php
-OpeningHoursTable::make('opening_hours')
-    ->showStatus() // Show current status (default: true)
-    ->showToday() // Show today's hours instead of status
-    ->timezone('Africa/Algiers') // Set specific timezone
+// Default: shows current status with colored badge
+OpeningHoursColumn::make('status')
+
+// Show today's hours
+OpeningHoursColumn::make('today')->showToday()
+
+// Simple open/closed status
+OpeningHoursColumn::make('open')->showSimpleStatus()
 ```
 
-## Infolist Component Options
-
+### Infolist Entry Options
 ```php
-OpeningHoursInfolist::make('opening_hours')
-    ->showStatus() // Show current status section (default: true)
-    ->showExceptions() // Show exceptions section (default: true)
-    ->timezone('Africa/Algiers') // Set specific timezone
+// Default: full details with status, hours, and exceptions
+OpeningHoursEntry::make('hours')
+
+// Status only
+OpeningHoursEntry::make('status')->showStatusOnly()
+
+// Weekly hours only
+OpeningHoursEntry::make('schedule')->showWeeklyHours()
 ```
 
 ## Data Structure
