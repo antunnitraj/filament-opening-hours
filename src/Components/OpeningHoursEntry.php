@@ -107,10 +107,22 @@ class OpeningHoursEntry extends Entry
             $timezone = $this->getTimezone() ?? config('filament-opening-hours.default_timezone', 'Africa/Algiers');
             $now = now($timezone);
             
+            // Check if business hours are enabled
+            if (isset($record->opening_hours_enabled) && !$record->opening_hours_enabled) {
+                return [
+                    'status' => 'disabled',
+                    'current_status' => 'Business hours disabled',
+                    'is_open' => false,
+                    'weekly_hours' => [],
+                    'exceptions' => [],
+                    'timezone' => $timezone,
+                ];
+            }
+            
             $data = [
-                'status' => $record->isOpen() ? 'open' : 'closed',
-                'current_status' => $record->getCurrentStatus(),
-                'is_open' => $record->isOpen(),
+                'status' => 'closed',
+                'current_status' => 'Closed',
+                'is_open' => false,
                 'weekly_hours' => [],
                 'exceptions' => [],
                 'timezone' => $timezone,
@@ -118,6 +130,16 @@ class OpeningHoursEntry extends Entry
                 'next_close' => null,
                 'last_updated' => $now->format('M j, Y \a\t H:i'),
             ];
+            
+            // Safely get status
+            try {
+                $data['is_open'] = $record->isOpen();
+                $data['status'] = $data['is_open'] ? 'open' : 'closed';
+                $data['current_status'] = $record->getCurrentStatus();
+            } catch (\Exception $e) {
+                // Keep default closed status if spatie fails
+                $data['current_status'] = 'Status unavailable';
+            }
 
             // Get weekly hours
             $days = [
@@ -144,17 +166,28 @@ class OpeningHoursEntry extends Entry
             // Get exceptions
             if (isset($record->opening_hours_exceptions) && is_array($record->opening_hours_exceptions)) {
                 $processedRanges = [];
+                $displayedExceptions = [];
                 
                 foreach ($record->opening_hours_exceptions as $date => $exception) {
-                    // Skip individual dates that are part of a range (already displayed)
+                    // First pass: collect all range headers for display
+                    if (isset($exception['is_range_header']) && $exception['is_range_header']) {
+                        $displayedExceptions[$date] = $exception;
+                        $processedRanges[] = $date;
+                        continue;
+                    }
+                    
+                    // Skip individual dates that are part of a range (already displayed via range header)
                     if (isset($exception['parent_range']) && in_array($exception['parent_range'], $processedRanges)) {
                         continue;
                     }
                     
-                    // Skip range headers
-                    if (isset($exception['is_range_header'])) {
-                        continue;
+                    // Show individual dates and recurring exceptions
+                    if (!isset($exception['parent_range'])) {
+                        $displayedExceptions[$date] = $exception;
                     }
+                }
+                
+                foreach ($displayedExceptions as $date => $exception) {
                     
                     $exceptionData = is_array($exception) ? $exception : ['type' => 'closed', 'hours' => []];
                     
@@ -162,13 +195,18 @@ class OpeningHoursEntry extends Entry
                     $dateMode = '';
                     $isRecurring = false;
                     
-                    if (isset($exceptionData['is_range']) && $exceptionData['is_range']) {
-                        // Date range
+                    if (isset($exceptionData['is_range_header']) && $exceptionData['is_range_header']) {
+                        // This is a range header - display the range
                         $startDate = \Carbon\Carbon::parse($exceptionData['start_date'])->format('M j');
                         $endDate = \Carbon\Carbon::parse($exceptionData['end_date'])->format('M j, Y');
                         $formattedDate = "{$startDate} - {$endDate}";
                         $dateMode = 'range';
-                        $processedRanges[] = "range_{$exceptionData['start_date']}_to_{$exceptionData['end_date']}";
+                    } elseif (isset($exceptionData['is_range']) && $exceptionData['is_range']) {
+                        // This is a range item (shouldn't display if we have header)
+                        $startDate = \Carbon\Carbon::parse($exceptionData['start_date'])->format('M j');
+                        $endDate = \Carbon\Carbon::parse($exceptionData['end_date'])->format('M j, Y');
+                        $formattedDate = "{$startDate} - {$endDate}";
+                        $dateMode = 'range';
                     } elseif (isset($exceptionData['recurring']) && $exceptionData['recurring']) {
                         // Recurring annual
                         $formattedDate = "Every " . \Carbon\Carbon::parse($exceptionData['date'])->format('F j');
@@ -214,13 +252,21 @@ class OpeningHoursEntry extends Entry
                 });
             }
 
-            // Get next open/close times
-            if ($nextOpen = $record->nextOpen()) {
-                $data['next_open'] = $nextOpen->format('M j, Y \a\t H:i');
+            // Get next open/close times with error handling
+            try {
+                if ($nextOpen = $record->nextOpen()) {
+                    $data['next_open'] = $nextOpen->format('M j, Y \a\t H:i');
+                }
+            } catch (\Exception $e) {
+                // Ignore nextOpen errors
             }
             
-            if ($nextClose = $record->nextClose()) {
-                $data['next_close'] = $nextClose->format('M j, Y \a\t H:i');
+            try {
+                if ($nextClose = $record->nextClose()) {
+                    $data['next_close'] = $nextClose->format('M j, Y \a\t H:i');
+                }
+            } catch (\Exception $e) {
+                // Ignore nextClose errors
             }
 
             return $data;

@@ -97,16 +97,40 @@ class OpeningHoursColumn extends Column
             $timezone = $this->getTimezone() ?? config('filament-opening-hours.default_timezone', 'Africa/Algiers');
             $now = now($timezone);
             
+            // Check if business hours are enabled
+            if (isset($record->opening_hours_enabled) && !$record->opening_hours_enabled) {
+                return [
+                    'status' => 'disabled',
+                    'current_status' => 'Disabled',
+                    'is_open' => false,
+                    'weekly_hours' => array_fill_keys(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], ['hours' => [], 'is_open' => false, 'formatted' => 'Disabled']),
+                    'today_hours' => [],
+                    'next_open' => null,
+                    'next_close' => null,
+                    'timezone' => $timezone,
+                ];
+            }
+            
             $data = [
-                'status' => $record->isOpen() ? 'open' : 'closed',
-                'current_status' => $record->getCurrentStatus(),
-                'is_open' => $record->isOpen(),
+                'status' => 'closed',
+                'current_status' => 'Closed',
+                'is_open' => false,
                 'weekly_hours' => [],
                 'today_hours' => [],
                 'next_open' => null,
                 'next_close' => null,
                 'timezone' => $timezone,
             ];
+            
+            // Safely get status
+            try {
+                $data['is_open'] = $record->isOpen();
+                $data['status'] = $data['is_open'] ? 'open' : 'closed';
+                $data['current_status'] = $record->getCurrentStatus();
+            } catch (\Exception $e) {
+                // Keep default closed status if spatie fails
+                $data['current_status'] = 'Hours unavailable';
+            }
 
             // Get weekly hours
             $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -123,13 +147,21 @@ class OpeningHoursColumn extends Column
             $today = strtolower($now->format('l'));
             $data['today_hours'] = $data['weekly_hours'][$today] ?? [];
 
-            // Get next open/close times
-            if ($nextOpen = $record->nextOpen()) {
-                $data['next_open'] = $nextOpen->format('H:i');
+            // Get next open/close times with error handling
+            try {
+                if ($nextOpen = $record->nextOpen()) {
+                    $data['next_open'] = $nextOpen->format('H:i');
+                }
+            } catch (\Exception $e) {
+                // Ignore nextOpen errors
             }
             
-            if ($nextClose = $record->nextClose()) {
-                $data['next_close'] = $nextClose->format('H:i');
+            try {
+                if ($nextClose = $record->nextClose()) {
+                    $data['next_close'] = $nextClose->format('H:i');
+                }
+            } catch (\Exception $e) {
+                // Ignore nextClose errors
             }
 
             return $data;

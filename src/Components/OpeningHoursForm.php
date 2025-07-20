@@ -21,17 +21,10 @@ class OpeningHoursForm
     {
         return [
             Section::make('Business Hours Configuration')
-                ->description('Configure your business operating hours and timezone')
+                ->description('Set your timezone and enable/disable business hours functionality')
                 ->icon('heroicon-o-clock')
                 ->schema([
                     Grid::make(2)->schema([
-                        Toggle::make('opening_hours_enabled')
-                            ->label('Enable Business Hours')
-                            ->helperText('Turn off to disable all business hours functionality')
-                            ->default(true)
-                            ->live()
-                            ->columnSpan(1),
-
                         Select::make('timezone')
                             ->label('Timezone')
                             ->options(collect(timezone_identifiers_list())->mapWithKeys(function ($timezone) {
@@ -41,23 +34,33 @@ class OpeningHoursForm
                             ->default('Africa/Algiers')
                             ->helperText('Select your business timezone')
                             ->columnSpan(1),
+                            
+                        Toggle::make('opening_hours_enabled')
+                            ->label('Enable Business Hours')
+                            ->helperText('Turn this ON to activate business hours. You can configure hours and exceptions below first, then enable when ready.')
+                            ->default(true)
+                            ->live()
+                            ->columnSpan(1),
                     ]),
                 ])
                 ->collapsible()
                 ->persistCollapsed(),
 
             Section::make('Weekly Schedule')
-                ->description('Set your regular weekly operating hours')
+                ->description(fn ($get) => $get('opening_hours_enabled') 
+                    ? 'Set your regular weekly operating hours' 
+                    : '⚠️ Business hours are disabled - Configure hours below, then enable above to activate')
                 ->icon('heroicon-o-calendar-days')
                 ->schema([
                     Grid::make(1)->schema(self::getDayComponents()),
                 ])
-                ->visible(fn ($get) => $get('opening_hours_enabled'))
                 ->collapsible()
                 ->persistCollapsed(),
 
             Section::make('Exceptions & Special Hours')
-                ->description('Manage holidays, special dates, and irregular hours')
+                ->description(fn ($get) => $get('opening_hours_enabled') 
+                    ? 'Manage holidays, special dates, and irregular hours' 
+                    : '⚠️ Business hours are disabled - Configure exceptions below, then enable above to activate')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->headerActions([
                     Actions\Action::make('add_exception')
@@ -235,6 +238,11 @@ class OpeningHoursForm
                             $exceptions = $get('opening_hours_exceptions') ?? [];
                             
                             if (empty($exceptions)) {
+                                $enabled = $get('opening_hours_enabled');
+                                $statusText = $enabled ? '' : '
+
+⚠️ **Note:** Business hours are currently disabled. You can configure exceptions now, then enable business hours above to activate them.';
+                                
                                 return '📝 **No exceptions configured yet**
 
 Use the "Add Exception" button above to add:
@@ -242,7 +250,7 @@ Use the "Add Exception" button above to add:
 • 📆 **Date ranges** - Vacation periods or seasonal changes  
 • 🔄 **Recurring dates** - Annual holidays that repeat
 
-*Examples: Christmas Day, Summer vacation (July 1-15), Every New Year*';
+*Examples: Christmas Day, Summer vacation (July 1-15), Every New Year*' . $statusText;
                             }
 
                             $output = [];
@@ -306,7 +314,6 @@ Use the "Add Exception" button above to add:
                         ->extraAttributes(['class' => 'text-sm'])
                         ->columnSpanFull(),
                 ])
-                ->visible(fn ($get) => $get('opening_hours_enabled'))
                 ->collapsible()
                 ->persistCollapsed(),
         ];

@@ -1,5 +1,11 @@
+@php
+    $businessData = $getBusinessHoursData();
+    $displayMode = $getDisplayMode();
+    $showTooltips = $getShowTooltips();
+@endphp
+
 <div 
-    x-data="openingHoursColumn(@js($getBusinessHoursData()), @js($getDisplayMode()), @js($getShowTooltips()))"
+    x-data="openingHoursColumn(@js($businessData), @js($displayMode), @js($showTooltips))"
     class="fi-ta-opening-hours-column"
 >
     @if ($getDisplayMode() === 'circular')
@@ -27,8 +33,7 @@
                         fill="none"
                         stroke-linecap="round"
                         :class="{'opacity-50': !segment.is_open}"
-                        x-tooltip.raw="segment.day + ': ' + segment.hours"
-                        x-show="showTooltips"
+                        x-tooltip.raw="showTooltips ? segment.day + ': ' + segment.hours : ''"
                     />
                 </template>
             </svg>
@@ -49,9 +54,9 @@
                         :class="{
                             'text-green-600 dark:text-green-400': data.is_open,
                             'text-red-600 dark:text-red-400': !data.is_open && data.status !== 'not_configured',
-                            'text-gray-500 dark:text-gray-400': data.status === 'not_configured'
+                            'text-gray-500 dark:text-gray-400': data.status === 'not_configured' || data.status === 'disabled' || data.status === 'error'
                         }"
-                        x-text="data.is_open ? 'OPEN' : (data.status === 'not_configured' ? 'N/A' : 'CLOSED')"
+                        x-text="data.is_open ? 'OPEN' : (data.status === 'not_configured' || data.status === 'disabled' ? 'N/A' : data.status === 'error' ? 'ERR' : 'CLOSED')"
                     ></div>
                 </div>
             </div>

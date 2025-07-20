@@ -51,16 +51,33 @@ trait HasOpeningHours
             $openingHours = $this->opening_hours ?? [];
             $exceptions = $this->opening_hours_exceptions ?? [];
             
-            // Process exceptions to handle ranges properly for spatie/opening-hours
-            $processedExceptions = [];
+            // Convert our format to spatie/opening-hours format
+            $spatieData = [];
             
+            // Process weekly hours
+            $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            foreach ($days as $day) {
+                if (isset($openingHours[$day]) && is_array($openingHours[$day])) {
+                    $dayData = $openingHours[$day];
+                    if (isset($dayData['enabled']) && $dayData['enabled'] && isset($dayData['hours']) && is_array($dayData['hours'])) {
+                        $spatieData[$day] = collect($dayData['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->toArray();
+                    } else {
+                        $spatieData[$day] = []; // Closed
+                    }
+                } else {
+                    $spatieData[$day] = []; // Closed
+                }
+            }
+            
+            // Process exceptions
+            $processedExceptions = [];
             foreach ($exceptions as $key => $exception) {
-                // Skip range headers and individual dates that are part of ranges for spatie compatibility
+                // Skip range headers and individual dates that are part of ranges
                 if (isset($exception['is_range_header']) || isset($exception['parent_range'])) {
                     continue;
                 }
                 
-                // Convert our exception format to spatie/opening-hours format
+                // Convert our exception format to spatie format
                 if (isset($exception['hours']) && !empty($exception['hours'])) {
                     $hours = collect($exception['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->toArray();
                 } else {
@@ -70,8 +87,26 @@ trait HasOpeningHours
                 $processedExceptions[$key] = $hours;
             }
             
-            $data = array_merge($openingHours, ['exceptions' => $processedExceptions]);
-            $this->openingHoursInstance = OpeningHours::create($data);
+            $spatieData['exceptions'] = $processedExceptions;
+            
+            try {
+                $this->openingHoursInstance = OpeningHours::create($spatieData);
+                // Increase day limit to avoid the 8-day error
+                $this->openingHoursInstance->setDayLimit(30);
+            } catch (\Exception $e) {
+                // Fallback: create empty opening hours if data is invalid
+                $this->openingHoursInstance = OpeningHours::create([
+                    'monday' => [],
+                    'tuesday' => [],
+                    'wednesday' => [],
+                    'thursday' => [],
+                    'friday' => [],
+                    'saturday' => [],
+                    'sunday' => [],
+                    'exceptions' => []
+                ]);
+                $this->openingHoursInstance->setDayLimit(30);
+            }
         }
 
         return $this->openingHoursInstance;
@@ -147,19 +182,36 @@ trait HasOpeningHours
 
     public function getCurrentStatus(?Carbon $dateTime = null): string
     {
-        $dateTime = $dateTime ?? now($this->getTimezone());
-        
-        if ($this->isOpen($dateTime)) {
-            $nextClose = $this->nextClose($dateTime);
-            return $nextClose 
-                ? "Open until {$nextClose->format('H:i')}"
-                : 'Open';
-        }
+        try {
+            // Check if business hours are enabled
+            if (isset($this->opening_hours_enabled) && !$this->opening_hours_enabled) {
+                return 'Business hours disabled';
+            }
+            
+            $dateTime = $dateTime ?? now($this->getTimezone());
+            
+            if ($this->isOpen($dateTime)) {
+                try {
+                    $nextClose = $this->nextClose($dateTime);
+                    return $nextClose 
+                        ? "Open until {$nextClose->format('H:i')}"
+                        : 'Open';
+                } catch (\Exception $e) {
+                    return 'Open';
+                }
+            }
 
-        $nextOpen = $this->nextOpen($dateTime);
-        return $nextOpen 
-            ? "Closed until {$nextOpen->format('H:i')}"
-            : 'Closed';
+            try {
+                $nextOpen = $this->nextOpen($dateTime);
+                return $nextOpen 
+                    ? "Closed until {$nextOpen->format('H:i')}"
+                    : 'Closed';
+            } catch (\Exception $e) {
+                return 'Closed';
+            }
+        } catch (\Exception $e) {
+            return 'Status unavailable';
+        }
     }
 
     protected function getTimezone(): string
