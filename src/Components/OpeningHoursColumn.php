@@ -132,15 +132,23 @@ class OpeningHoursColumn extends Column
                 $data['current_status'] = 'Hours unavailable';
             }
 
-            // Get weekly hours
+            // Get weekly hours with better error handling
             $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             foreach ($days as $day) {
-                $dayHours = $record->getOpeningHoursForDay($day);
-                $data['weekly_hours'][$day] = [
-                    'hours' => $dayHours,
-                    'is_open' => !empty($dayHours),
-                    'formatted' => empty($dayHours) ? 'Closed' : implode(', ', $dayHours),
-                ];
+                try {
+                    $dayHours = $record->getOpeningHoursForDay($day);
+                    $data['weekly_hours'][$day] = [
+                        'hours' => $dayHours,
+                        'is_open' => !empty($dayHours),
+                        'formatted' => empty($dayHours) ? 'Closed' : implode(', ', $dayHours),
+                    ];
+                } catch (\Exception $e) {
+                    $data['weekly_hours'][$day] = [
+                        'hours' => [],
+                        'is_open' => false,
+                        'formatted' => 'Error',
+                    ];
+                }
             }
 
             // Get today's hours
