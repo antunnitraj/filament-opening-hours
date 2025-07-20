@@ -2,15 +2,10 @@
     $businessData = $getBusinessHoursData();
     $displayMode = $getDisplayMode();
     $showTooltips = $getShowTooltips();
-    // Debug: log the data to help troubleshoot
-    // \Log::info('Business Hours Data:', $businessData);
 @endphp
 
-<div 
-    x-data="openingHoursColumn(@js($businessData), @js($displayMode), @js($showTooltips))"
-    class="fi-ta-opening-hours-column"
->
-    @if ($getDisplayMode() === 'circular')
+<div class="fi-ta-opening-hours-column">
+    @if ($displayMode === 'circular')
         <!-- Circular Display -->
         <div class="relative flex items-center justify-center" style="width: 80px; height: 80px;">
             <!-- SVG Circle -->
@@ -27,148 +22,149 @@
                 />
                 
                 <!-- Day segments -->
-                <template x-for="(segment, index) in circularData.segments" :key="index">
+                @php
+                    $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                    $segments = [];
+                    foreach ($days as $index => $day) {
+                        $dayData = $businessData['weekly_hours'][$day] ?? ['is_open' => false, 'formatted' => 'Closed'];
+                        $angle = ($index / 7) * 360;
+                        $segments[] = [
+                            'day' => ucfirst($day),
+                            'is_open' => $dayData['is_open'],
+                            'hours' => $dayData['formatted'],
+                            'angle' => $angle,
+                            'color' => $dayData['is_open'] ? '#10b981' : '#ef4444'
+                        ];
+                    }
+                @endphp
+                
+                @foreach ($segments as $segment)
+                    @php
+                        $segmentAngle = 360 / 7;
+                        $startAngle = $segment['angle'];
+                        $endAngle = $startAngle + $segmentAngle - 2;
+                        $radius = 35;
+                        
+                        $startAngleRad = ($startAngle * M_PI) / 180;
+                        $endAngleRad = ($endAngle * M_PI) / 180;
+                        
+                        $largeArcFlag = ($endAngle - $startAngle) <= 180 ? "0" : "1";
+                        
+                        $x1 = 50 + $radius * cos($startAngleRad);
+                        $y1 = 50 + $radius * sin($startAngleRad);
+                        $x2 = 50 + $radius * cos($endAngleRad);
+                        $y2 = 50 + $radius * sin($endAngleRad);
+                        
+                        $pathData = "M {$x1} {$y1} A {$radius} {$radius} 0 {$largeArcFlag} 1 {$x2} {$y2}";
+                    @endphp
+                    
                     <path
-                        x-bind:d="getArcPath(segment.angle, 51.4)"
-                        x-bind:stroke="segment.color"
+                        d="{{ $pathData }}"
+                        stroke="{{ $segment['color'] }}"
                         stroke-width="8"
                         fill="none"
                         stroke-linecap="round"
-                        x-bind:class="{'opacity-50': !segment.is_open}"
-                        x-bind:title="segment.day + ': ' + segment.hours"
+                        class="{{ !$segment['is_open'] ? 'opacity-50' : '' }}"
+                        @if ($showTooltips)
+                            title="{{ $segment['day'] }}: {{ $segment['hours'] }}"
+                        @endif
                     />
-                </template>
+                @endforeach
             </svg>
             
             <!-- Center status -->
             <div class="absolute inset-0 flex items-center justify-center">
                 <div class="text-center">
-                    <div 
-                        x-bind:class="{
-                            'w-3 h-3 rounded-full mx-auto mb-1': true,
-                            'bg-green-500 animate-pulse': data.is_open,
-                            'bg-red-500': !data.is_open && data.status !== 'not_configured',
-                            'bg-gray-400': data.status === 'not_configured'
-                        }"
+                    <div class="w-3 h-3 rounded-full mx-auto mb-1 
+                        @if ($businessData['is_open']) 
+                            bg-green-500 animate-pulse
+                        @elseif ($businessData['status'] === 'not_configured' || $businessData['status'] === 'disabled')
+                            bg-gray-400
+                        @else
+                            bg-red-500
+                        @endif"
                     ></div>
-                    <div 
-                        class="text-xs font-medium"
-                        x-bind:class="{
-                            'text-green-600 dark:text-green-400': data.is_open,
-                            'text-red-600 dark:text-red-400': !data.is_open && data.status !== 'not_configured',
-                            'text-gray-500 dark:text-gray-400': data.status === 'not_configured' || data.status === 'disabled' || data.status === 'error'
-                        }"
-                        x-text="data.is_open ? 'OPEN' : (data.status === 'not_configured' || data.status === 'disabled' ? 'N/A' : data.status === 'error' ? 'ERR' : 'CLOSED')"
-                    ></div>
+                    <div class="text-xs font-medium
+                        @if ($businessData['is_open'])
+                            text-green-600 dark:text-green-400
+                        @elseif ($businessData['status'] === 'not_configured' || $businessData['status'] === 'disabled' || $businessData['status'] === 'error')
+                            text-gray-500 dark:text-gray-400
+                        @else
+                            text-red-600 dark:text-red-400
+                        @endif">
+                        @if ($businessData['is_open'])
+                            OPEN
+                        @elseif ($businessData['status'] === 'not_configured' || $businessData['status'] === 'disabled')
+                            N/A
+                        @elseif ($businessData['status'] === 'error')
+                            ERR
+                        @else
+                            CLOSED
+                        @endif
+                    </div>
                 </div>
             </div>
+            
+            @if ($showTooltips)
+                <div title="{{ $businessData['current_status'] }}" class="absolute inset-0 cursor-help"></div>
+            @endif
         </div>
         
-        <!-- Tooltip for overall status -->
-        <div 
-            x-show="showTooltips" 
-            x-bind:title="data.current_status"
-            class="absolute inset-0 cursor-help"
-        ></div>
-        
-    @elseif ($getDisplayMode() === 'status')
+    @elseif ($displayMode === 'status')
         <!-- Status Badge Display -->
         <div class="flex items-center justify-center">
-            <span 
-                x-bind:class="{
-                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium': true,
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': data.is_open,
-                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': !data.is_open && data.status !== 'not_configured',
-                    'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200': data.status === 'not_configured'
-                }"
-                x-text="data.current_status"
-                x-bind:title="showTooltips ? 'Next: ' + (data.is_open ? 'Closes at ' + data.next_close : 'Opens at ' + data.next_open) : ''"
-            ></span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                @if ($businessData['is_open'])
+                    bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                @elseif ($businessData['status'] === 'not_configured')
+                    bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
+                @else
+                    bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                @endif"
+                @if ($showTooltips && isset($businessData['next_open']) && isset($businessData['next_close']))
+                    title="Next: {{ $businessData['is_open'] ? 'Closes at ' . $businessData['next_close'] : 'Opens at ' . $businessData['next_open'] }}"
+                @endif
+            >
+                {{ $businessData['current_status'] }}
+            </span>
         </div>
         
-    @elseif ($getDisplayMode() === 'weekly')
+    @elseif ($displayMode === 'weekly')
         <!-- Weekly Overview Display -->
         <div class="flex items-center space-x-1">
-            <template x-for="(day, dayName) in data.weekly_hours" :key="dayName">
-                <div 
-                    x-bind:class="{
-                        'w-3 h-3 rounded-sm': true,
-                        'bg-green-500': day.is_open,
-                        'bg-red-300': !day.is_open,
-                    }"
-                    x-bind:title="dayName.charAt(0).toUpperCase() + dayName.slice(1) + ': ' + day.formatted"
+            @php
+                $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            @endphp
+            @foreach ($days as $day)
+                @php
+                    $dayData = $businessData['weekly_hours'][$day] ?? ['is_open' => false, 'formatted' => 'Closed'];
+                    $dayLabel = ucfirst($day);
+                @endphp
+                <div class="w-3 h-3 rounded-sm {{ $dayData['is_open'] ? 'bg-green-500' : 'bg-red-300' }}"
+                    @if ($showTooltips)
+                        title="{{ $dayLabel }}: {{ $dayData['formatted'] }}"
+                    @endif
                 ></div>
-            </template>
+            @endforeach
         </div>
         
         <!-- Current status indicator -->
         <div class="mt-1">
-            <div 
-                x-bind:class="{
-                    'w-2 h-2 rounded-full mx-auto': true,
-                    'bg-green-500 animate-pulse': data.is_open,
-                    'bg-red-500': !data.is_open && data.status !== 'not_configured',
-                    'bg-gray-400': data.status === 'not_configured'
-                }"
-                x-bind:title="data.current_status"
+            <div class="w-2 h-2 rounded-full mx-auto
+                @if ($businessData['is_open'])
+                    bg-green-500 animate-pulse
+                @elseif ($businessData['status'] === 'not_configured')
+                    bg-gray-400
+                @else
+                    bg-red-500
+                @endif"
+                @if ($showTooltips)
+                    title="{{ $businessData['current_status'] }}"
+                @endif
             ></div>
         </div>
     @endif
 </div>
-
-<script>
-function openingHoursColumn(businessData, displayMode, showTooltips) {
-    return {
-        data: businessData,
-        displayMode: displayMode,
-        showTooltips: showTooltips,
-        
-        get circularData() {
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            const segments = [];
-            
-            // Check if we have weekly hours data
-            const weeklyHours = this.data.weekly_hours || {};
-            
-            days.forEach((day, index) => {
-                const dayData = weeklyHours[day] || { is_open: false, formatted: 'Closed' };
-                const angle = (index / 7) * 360;
-                
-                segments.push({
-                    day: day.charAt(0).toUpperCase() + day.slice(1),
-                    is_open: Boolean(dayData.is_open),
-                    hours: dayData.formatted || 'Closed',
-                    angle: angle,
-                    color: dayData.is_open ? '#10b981' : '#ef4444'
-                });
-            });
-            
-            return {
-                segments: segments,
-                center_status: this.data.current_status || 'Status unavailable',
-                is_currently_open: Boolean(this.data.is_open)
-            };
-        },
-        
-        getArcPath(startAngle, radius) {
-            const segmentAngle = 360 / 7; // 7 days
-            const endAngle = startAngle + segmentAngle - 2; // Small gap between segments
-            
-            const startAngleRad = (startAngle * Math.PI) / 180;
-            const endAngleRad = (endAngle * Math.PI) / 180;
-            
-            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-            
-            const x1 = 50 + radius * Math.cos(startAngleRad);
-            const y1 = 50 + radius * Math.sin(startAngleRad);
-            const x2 = 50 + radius * Math.cos(endAngleRad);
-            const y2 = 50 + radius * Math.sin(endAngleRad);
-            
-            return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
-        }
-    };
-}
-</script>
 
 <style>
 .fi-ta-opening-hours-column {
