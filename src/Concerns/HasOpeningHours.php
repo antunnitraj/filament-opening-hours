@@ -114,9 +114,12 @@ trait HasOpeningHours
 
     public function isOpen(?Carbon $dateTime = null): bool
     {
-        $dateTime = $dateTime ?? now($this->getTimezone());
-        
-        return $this->openingHours()->isOpenAt($dateTime);
+        try {
+            $dateTime = $dateTime ?? now($this->getTimezone());
+            return $this->openingHours()->isOpenAt($dateTime);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function isClosed(?Carbon $dateTime = null): bool
@@ -126,7 +129,11 @@ trait HasOpeningHours
 
     public function isOpenOn(string $day): bool
     {
-        return $this->openingHours()->isOpenOn($day);
+        try {
+            return $this->openingHours()->isOpenOn($day);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function isClosedOn(string $day): bool
@@ -136,48 +143,76 @@ trait HasOpeningHours
 
     public function nextOpen(?Carbon $dateTime = null): ?Carbon
     {
-        $dateTime = $dateTime ?? now($this->getTimezone());
-        
-        $nextOpen = $this->openingHours()->nextOpen($dateTime);
-        
-        return $nextOpen ? Carbon::instance($nextOpen) : null;
+        try {
+            $dateTime = $dateTime ?? now($this->getTimezone());
+            $nextOpen = $this->openingHours()->nextOpen($dateTime);
+            return $nextOpen ? Carbon::instance($nextOpen) : null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function nextClose(?Carbon $dateTime = null): ?Carbon
     {
-        $dateTime = $dateTime ?? now($this->getTimezone());
-        
-        $nextClose = $this->openingHours()->nextClose($dateTime);
-        
-        return $nextClose ? Carbon::instance($nextClose) : null;
+        try {
+            $dateTime = $dateTime ?? now($this->getTimezone());
+            $nextClose = $this->openingHours()->nextClose($dateTime);
+            return $nextClose ? Carbon::instance($nextClose) : null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function previousOpen(?Carbon $dateTime = null): ?Carbon
     {
-        $dateTime = $dateTime ?? now($this->getTimezone());
-        
-        $previousOpen = $this->openingHours()->previousOpen($dateTime);
-        
-        return $previousOpen ? Carbon::instance($previousOpen) : null;
+        try {
+            $dateTime = $dateTime ?? now($this->getTimezone());
+            $previousOpen = $this->openingHours()->previousOpen($dateTime);
+            return $previousOpen ? Carbon::instance($previousOpen) : null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function previousClose(?Carbon $dateTime = null): ?Carbon
     {
-        $dateTime = $dateTime ?? now($this->getTimezone());
-        
-        $previousClose = $this->openingHours()->previousClose($dateTime);
-        
-        return $previousClose ? Carbon::instance($previousClose) : null;
+        try {
+            $dateTime = $dateTime ?? now($this->getTimezone());
+            $previousClose = $this->openingHours()->previousClose($dateTime);
+            return $previousClose ? Carbon::instance($previousClose) : null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function getOpeningHoursForDay(string $day): array
     {
-        return $this->openingHours()->forDay($day)->toArray();
+        try {
+            $dayHours = $this->openingHours()->forDay($day);
+            // Convert OpeningHoursForDay to array of time strings
+            $hours = [];
+            foreach ($dayHours as $timeRange) {
+                $hours[] = (string) $timeRange;
+            }
+            return $hours;
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     public function getOpeningHoursForDate(Carbon $date): array
     {
-        return $this->openingHours()->forDate($date)->toArray();
+        try {
+            $dateHours = $this->openingHours()->forDate($date);
+            // Convert OpeningHoursForDay to array of time strings
+            $hours = [];
+            foreach ($dateHours as $timeRange) {
+                $hours[] = (string) $timeRange;
+            }
+            return $hours;
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     public function getCurrentStatus(?Carbon $dateTime = null): string
