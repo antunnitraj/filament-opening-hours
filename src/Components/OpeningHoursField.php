@@ -2,6 +2,7 @@
 
 namespace KaraOdin\FilamentOpeningHours\Components;
 
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Repeater;
@@ -12,15 +13,19 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\DatePicker;
 
-class OpeningHoursForm
+class OpeningHoursField extends Field
 {
-    public static function schema(): array
+    protected string $view = 'filament-opening-hours::components.opening-hours-field';
+
+    protected function setUp(): void
     {
-        return [
+        parent::setUp();
+
+        $this->schema([
             Section::make('Regular Opening Hours')
                 ->description('Set your regular weekly opening hours')
                 ->schema([
-                    Grid::make(1)->schema(self::getDayComponents()),
+                    Grid::make(1)->schema($this->getDayComponents()),
                 ]),
 
             Section::make('Exceptions & Holidays')
@@ -86,10 +91,10 @@ class OpeningHoursForm
                                 : 'New Exception'
                         ),
                 ]),
-        ];
+        ]);
     }
 
-    protected static function getDayComponents(): array
+    protected function getDayComponents(): array
     {
         $days = [
             'monday' => 'Monday',

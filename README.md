@@ -75,6 +75,7 @@ Schema::table('restaurants', function (Blueprint $table) {
 
 ```php
 use KaraOdin\FilamentOpeningHours\Components\OpeningHoursForm;
+use KaraOdin\FilamentOpeningHours\Components\OpeningHoursField;
 
 public static function form(Form $form): Form
 {
@@ -82,7 +83,12 @@ public static function form(Form $form): Form
         ->schema([
             // ... other fields
             
-            ...OpeningHoursForm::make(),
+            // Option 1: Using schema spread (recommended)
+            ...OpeningHoursForm::schema(),
+            
+            // Option 2: Using field component
+            OpeningHoursField::make('opening_hours_data')
+                ->label('Opening Hours'),
         ]);
 }
 ```
@@ -219,8 +225,11 @@ return [
 
 ### Form Component
 ```php
-// Simple usage - returns array of components
-...OpeningHoursForm::make()
+// Option 1: Schema spread (recommended) - returns array of components
+...OpeningHoursForm::schema()
+
+// Option 2: Field component - single component with all functionality
+OpeningHoursField::make('opening_hours_data')->label('Opening Hours')
 ```
 
 ### Table Column Options
