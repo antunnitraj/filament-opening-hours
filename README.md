@@ -9,7 +9,7 @@ A **premium-quality** Filament plugin for managing business opening hours with a
 
 - 🕐 **Advanced Visual Form Builder** - Intuitive interface with collapsible sections and live validation
 - 🌍 **Comprehensive Timezone Support** - Searchable timezone dropdown with Algeria as default
-- 📅 **Smart Exception Management** - Modal-based system with recurring annual exceptions
+- 📅 **Smart Exception Management** - Modal-based system with date ranges and recurring exceptions
 - 🎯 **Multiple Display Modes** - Circular charts, status badges, and detailed weekly views
 - 🔄 **Global Enable/Disable** - Master toggle for entire business hours system
 - 📊 **Rich Table Columns** - Interactive circular displays with hover tooltips
@@ -332,7 +332,9 @@ The plugin stores data in this enhanced format:
 
 ### Exception Management
 - **Modal Interface**: Clean, intuitive exception management
+- **Date Ranges**: Vacation periods, seasonal closures (e.g., July 1-15)
 - **Recurring Exceptions**: Annual holidays (e.g., every December 25th)
+- **Single Dates**: Specific holidays or one-time closures
 - **Custom Labels**: Personalized exception names
 - **Multiple Types**: Holiday, Closed, Special Hours, Maintenance, Events
 - **Rich Descriptions**: Additional notes for each exception

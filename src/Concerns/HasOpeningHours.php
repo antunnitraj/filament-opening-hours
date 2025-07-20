@@ -48,11 +48,29 @@ trait HasOpeningHours
     public function openingHours(): OpeningHours
     {
         if ($this->openingHoursInstance === null) {
-            $data = array_merge(
-                $this->opening_hours ?? [],
-                ['exceptions' => $this->opening_hours_exceptions ?? []]
-            );
-
+            $openingHours = $this->opening_hours ?? [];
+            $exceptions = $this->opening_hours_exceptions ?? [];
+            
+            // Process exceptions to handle ranges properly for spatie/opening-hours
+            $processedExceptions = [];
+            
+            foreach ($exceptions as $key => $exception) {
+                // Skip range headers and individual dates that are part of ranges for spatie compatibility
+                if (isset($exception['is_range_header']) || isset($exception['parent_range'])) {
+                    continue;
+                }
+                
+                // Convert our exception format to spatie/opening-hours format
+                if (isset($exception['hours']) && !empty($exception['hours'])) {
+                    $hours = collect($exception['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->toArray();
+                } else {
+                    $hours = []; // Closed
+                }
+                
+                $processedExceptions[$key] = $hours;
+            }
+            
+            $data = array_merge($openingHours, ['exceptions' => $processedExceptions]);
             $this->openingHoursInstance = OpeningHours::create($data);
         }
 

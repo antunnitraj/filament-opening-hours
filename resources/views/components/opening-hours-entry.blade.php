@@ -136,9 +136,17 @@
                                         <span class="text-sm font-medium text-gray-900 dark:text-white">
                                             {{ $exception['formatted_date'] }}
                                         </span>
-                                        @if ($exception['is_recurring'])
+                                        @if ($exception['date_mode'] === 'range')
+                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                                                📆 Range
+                                            </span>
+                                        @elseif ($exception['date_mode'] === 'recurring')
                                             <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                                                Recurring
+                                                🔄 Annual
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                                                📅 Single
                                             </span>
                                         @endif
                                     </div>

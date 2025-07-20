@@ -143,14 +143,47 @@ class OpeningHoursEntry extends Entry
 
             // Get exceptions
             if (isset($record->opening_hours_exceptions) && is_array($record->opening_hours_exceptions)) {
+                $processedRanges = [];
+                
                 foreach ($record->opening_hours_exceptions as $date => $exception) {
-                    $isRecurring = strlen($date) === 5; // MM-DD format
+                    // Skip individual dates that are part of a range (already displayed)
+                    if (isset($exception['parent_range']) && in_array($exception['parent_range'], $processedRanges)) {
+                        continue;
+                    }
                     
-                    $formattedDate = $isRecurring 
-                        ? "Every " . \Carbon\Carbon::createFromFormat('m-d', $date)->format('F j')
-                        : \Carbon\Carbon::parse($date)->format('M j, Y');
+                    // Skip range headers
+                    if (isset($exception['is_range_header'])) {
+                        continue;
+                    }
                     
                     $exceptionData = is_array($exception) ? $exception : ['type' => 'closed', 'hours' => []];
+                    
+                    $formattedDate = '';
+                    $dateMode = '';
+                    $isRecurring = false;
+                    
+                    if (isset($exceptionData['is_range']) && $exceptionData['is_range']) {
+                        // Date range
+                        $startDate = \Carbon\Carbon::parse($exceptionData['start_date'])->format('M j');
+                        $endDate = \Carbon\Carbon::parse($exceptionData['end_date'])->format('M j, Y');
+                        $formattedDate = "{$startDate} - {$endDate}";
+                        $dateMode = 'range';
+                        $processedRanges[] = "range_{$exceptionData['start_date']}_to_{$exceptionData['end_date']}";
+                    } elseif (isset($exceptionData['recurring']) && $exceptionData['recurring']) {
+                        // Recurring annual
+                        $formattedDate = "Every " . \Carbon\Carbon::parse($exceptionData['date'])->format('F j');
+                        $dateMode = 'recurring';
+                        $isRecurring = true;
+                    } elseif (strlen($date) === 5) {
+                        // MM-DD format (legacy recurring)
+                        $formattedDate = "Every " . \Carbon\Carbon::createFromFormat('m-d', $date)->format('F j');
+                        $dateMode = 'recurring';
+                        $isRecurring = true;
+                    } else {
+                        // Single date
+                        $formattedDate = \Carbon\Carbon::parse($date)->format('M j, Y');
+                        $dateMode = 'single';
+                    }
                     
                     $data['exceptions'][] = [
                         'date' => $date,
@@ -160,15 +193,23 @@ class OpeningHoursEntry extends Entry
                         'note' => $exceptionData['note'] ?? '',
                         'hours' => $exceptionData['hours'] ?? [],
                         'is_recurring' => $isRecurring,
+                        'date_mode' => $dateMode,
                         'formatted_hours' => empty($exceptionData['hours']) ? 'Closed' : 
                             collect($exceptionData['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->join(', '),
                     ];
                 }
                 
-                // Sort exceptions by date
+                // Sort exceptions by type and date
                 usort($data['exceptions'], function($a, $b) {
-                    if ($a['is_recurring'] && !$b['is_recurring']) return 1;
-                    if (!$a['is_recurring'] && $b['is_recurring']) return -1;
+                    // Sort by date mode first: single, range, then recurring
+                    $modeOrder = ['single' => 1, 'range' => 2, 'recurring' => 3];
+                    $aModeOrder = $modeOrder[$a['date_mode']] ?? 4;
+                    $bModeOrder = $modeOrder[$b['date_mode']] ?? 4;
+                    
+                    if ($aModeOrder !== $bModeOrder) {
+                        return $aModeOrder <=> $bModeOrder;
+                    }
+                    
                     return strcmp($a['date'], $b['date']);
                 });
             }

@@ -65,9 +65,16 @@ class OpeningHoursForm
                         ->icon('heroicon-o-plus')
                         ->color('primary')
                         ->form([
-                            Grid::make(2)->schema([
-                                DatePicker::make('exception_date')
-                                    ->label('Date')
+                            Grid::make(3)->schema([
+                                Select::make('date_mode')
+                                    ->label('Date Mode')
+                                    ->options([
+                                        'single' => 'Single Date',
+                                        'range' => 'Date Range',
+                                        'recurring' => 'Recurring Annual',
+                                    ])
+                                    ->default('single')
+                                    ->live()
                                     ->required()
                                     ->columnSpan(1),
 
@@ -83,8 +90,41 @@ class OpeningHoursForm
                                     ->default('closed')
                                     ->live()
                                     ->required()
-                                    ->columnSpan(1),
+                                    ->columnSpan(2),
                             ]),
+
+                            // Single Date
+                            Grid::make(1)->schema([
+                                DatePicker::make('exception_date')
+                                    ->label('Date')
+                                    ->required()
+                                    ->helperText('Select a specific date for this exception'),
+                            ])->visible(fn ($get) => $get('date_mode') === 'single'),
+
+                            // Date Range
+                            Grid::make(2)->schema([
+                                DatePicker::make('start_date')
+                                    ->label('Start Date')
+                                    ->required()
+                                    ->live()
+                                    ->columnSpan(1),
+
+                                DatePicker::make('end_date')
+                                    ->label('End Date')
+                                    ->required()
+                                    ->after('start_date')
+                                    ->helperText('Exception will apply to all dates in this range')
+                                    ->columnSpan(1),
+                            ])->visible(fn ($get) => $get('date_mode') === 'range'),
+
+                            // Recurring Annual
+                            Grid::make(2)->schema([
+                                DatePicker::make('recurring_date')
+                                    ->label('Annual Date')
+                                    ->required()
+                                    ->helperText('This exception will repeat every year on this date')
+                                    ->columnSpan(2),
+                            ])->visible(fn ($get) => $get('date_mode') === 'recurring'),
 
                             Grid::make(1)->schema([
                                 TextInput::make('exception_label')
@@ -130,28 +170,61 @@ class OpeningHoursForm
                                 ])
                                 ->visible(fn ($get) => $get('exception_type') === 'special_hours'),
 
-                            Toggle::make('is_recurring')
-                                ->label('Recurring Annual Exception')
-                                ->helperText('This exception will repeat every year on the same date')
-                                ->default(false),
                         ])
                         ->action(function (array $data, $get, $set) {
                             $exceptions = $get('opening_hours_exceptions') ?? [];
                             
-                            $exceptionKey = $data['exception_date'];
-                            if ($data['is_recurring'] ?? false) {
-                                $exceptionKey = date('m-d', strtotime($data['exception_date']));
-                            }
-
-                            $exception = [
+                            $exceptionData = [
                                 'type' => $data['exception_type'],
                                 'label' => $data['exception_label'] ?? '',
                                 'note' => $data['exception_note'] ?? '',
-                                'recurring' => $data['is_recurring'] ?? false,
                                 'hours' => $data['exception_type'] === 'special_hours' ? ($data['exception_hours'] ?? []) : [],
+                                'date_mode' => $data['date_mode'],
                             ];
 
-                            $exceptions[$exceptionKey] = $exception;
+                            switch ($data['date_mode']) {
+                                case 'single':
+                                    $key = $data['exception_date'];
+                                    $exceptionData['date'] = $data['exception_date'];
+                                    $exceptions[$key] = $exceptionData;
+                                    break;
+                                    
+                                case 'range':
+                                    $startDate = \Carbon\Carbon::parse($data['start_date']);
+                                    $endDate = \Carbon\Carbon::parse($data['end_date']);
+                                    
+                                    // Create range key for display
+                                    $rangeKey = "range_{$data['start_date']}_to_{$data['end_date']}";
+                                    $exceptionData['start_date'] = $data['start_date'];
+                                    $exceptionData['end_date'] = $data['end_date'];
+                                    $exceptionData['is_range'] = true;
+                                    
+                                    // Add individual dates for spatie/opening-hours compatibility
+                                    $currentDate = $startDate->copy();
+                                    while ($currentDate->lte($endDate)) {
+                                        $dateKey = $currentDate->format('Y-m-d');
+                                        $exceptions[$dateKey] = array_merge($exceptionData, [
+                                            'date' => $dateKey,
+                                            'parent_range' => $rangeKey,
+                                        ]);
+                                        $currentDate->addDay();
+                                    }
+                                    
+                                    // Also store the range info for display
+                                    $exceptions[$rangeKey] = array_merge($exceptionData, [
+                                        'is_range_header' => true,
+                                    ]);
+                                    break;
+                                    
+                                case 'recurring':
+                                    $recurringDate = \Carbon\Carbon::parse($data['recurring_date']);
+                                    $key = $recurringDate->format('m-d'); // MM-DD format for recurring
+                                    $exceptionData['date'] = $data['recurring_date'];
+                                    $exceptionData['recurring'] = true;
+                                    $exceptions[$key] = $exceptionData;
+                                    break;
+                            }
+
                             $set('opening_hours_exceptions', $exceptions);
                         }),
                 ])
@@ -162,11 +235,30 @@ class OpeningHoursForm
                             $exceptions = $get('opening_hours_exceptions') ?? [];
                             
                             if (empty($exceptions)) {
-                                return 'No exceptions configured. Use the "Add Exception" button above to add holidays or special hours.';
+                                return '📝 **No exceptions configured yet**
+
+Use the "Add Exception" button above to add:
+• 📅 **Single dates** - Specific holidays or closures
+• 📆 **Date ranges** - Vacation periods or seasonal changes  
+• 🔄 **Recurring dates** - Annual holidays that repeat
+
+*Examples: Christmas Day, Summer vacation (July 1-15), Every New Year*';
                             }
 
                             $output = [];
+                            $processedRanges = [];
+                            
                             foreach ($exceptions as $date => $exception) {
+                                // Skip individual dates that are part of a range (already displayed)
+                                if (isset($exception['parent_range']) && in_array($exception['parent_range'], $processedRanges)) {
+                                    continue;
+                                }
+                                
+                                // Skip range headers (we'll process them separately)
+                                if (isset($exception['is_range_header'])) {
+                                    continue;
+                                }
+
                                 $icon = match($exception['type']) {
                                     'holiday' => '🎉',
                                     'closed' => '🔒',
@@ -176,19 +268,40 @@ class OpeningHoursForm
                                     default => '📅'
                                 };
 
-                                $dateFormatted = $exception['recurring'] ?? false 
-                                    ? "Every " . date('F j', strtotime('2000-' . $date))
-                                    : date('M j, Y', strtotime($date));
+                                $dateFormatted = '';
+                                $badge = '';
 
-                                $label = $exception['label'] ? " ({$exception['label']})" : '';
+                                if (isset($exception['is_range']) && $exception['is_range']) {
+                                    // Date range
+                                    $startDate = \Carbon\Carbon::parse($exception['start_date'])->format('M j');
+                                    $endDate = \Carbon\Carbon::parse($exception['end_date'])->format('M j, Y');
+                                    $dateFormatted = "{$startDate} - {$endDate}";
+                                    $badge = '📆 **Range**';
+                                    $processedRanges[] = "range_{$exception['start_date']}_to_{$exception['end_date']}";
+                                } elseif (isset($exception['recurring']) && $exception['recurring']) {
+                                    // Recurring annual
+                                    $dateFormatted = "Every " . \Carbon\Carbon::parse($exception['date'])->format('F j');
+                                    $badge = '🔄 **Annual**';
+                                } elseif (strlen($date) === 5) {
+                                    // MM-DD format (recurring)
+                                    $dateFormatted = "Every " . \Carbon\Carbon::createFromFormat('m-d', $date)->format('F j');
+                                    $badge = '🔄 **Annual**';
+                                } else {
+                                    // Single date
+                                    $dateFormatted = \Carbon\Carbon::parse($date)->format('M j, Y');
+                                    $badge = '📅 **Single**';
+                                }
+
+                                $label = $exception['label'] ? " - **{$exception['label']}**" : '';
                                 $hours = $exception['type'] === 'special_hours' && !empty($exception['hours'])
-                                    ? ' - ' . collect($exception['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->join(', ')
+                                    ? ' ⏰ ' . collect($exception['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->join(', ')
                                     : '';
+                                $note = $exception['note'] ? "\n   *{$exception['note']}*" : '';
 
-                                $output[] = "{$icon} **{$dateFormatted}**: {$exception['type']}{$label}{$hours}";
+                                $output[] = "{$icon} **{$dateFormatted}** {$badge}\n   📋 " . ucfirst(str_replace('_', ' ', $exception['type'])) . "{$label}{$hours}{$note}";
                             }
 
-                            return implode("\n", $output);
+                            return implode("\n\n", $output);
                         })
                         ->extraAttributes(['class' => 'text-sm'])
                         ->columnSpanFull(),
