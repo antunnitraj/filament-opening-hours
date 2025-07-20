@@ -82,8 +82,7 @@ public static function form(Form $form): Form
         ->schema([
             // ... other fields
             
-            OpeningHoursForm::make('opening_hours')
-                ->timezone('Africa/Algiers'), // Optional, uses config default
+            ...OpeningHoursForm::make(),
         ]);
 }
 ```
