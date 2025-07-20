@@ -59,8 +59,13 @@ trait HasOpeningHours
             foreach ($days as $day) {
                 if (isset($openingHours[$day]) && is_array($openingHours[$day])) {
                     $dayData = $openingHours[$day];
-                    if (isset($dayData['enabled']) && $dayData['enabled'] && isset($dayData['hours']) && is_array($dayData['hours'])) {
-                        $spatieData[$day] = collect($dayData['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->toArray();
+                    if (isset($dayData['enabled']) && $dayData['enabled'] && isset($dayData['hours']) && is_array($dayData['hours']) && !empty($dayData['hours'])) {
+                        // Filter out empty hours and convert to spatie format
+                        $validHours = collect($dayData['hours'])
+                            ->filter(fn($h) => isset($h['from'], $h['to']) && !empty($h['from']) && !empty($h['to']))
+                            ->map(fn($h) => "{$h['from']}-{$h['to']}")
+                            ->toArray();
+                        $spatieData[$day] = $validHours;
                     } else {
                         $spatieData[$day] = []; // Closed
                     }
@@ -224,6 +229,21 @@ trait HasOpeningHours
             }
             
             $dateTime = $dateTime ?? now($this->getTimezone());
+            $currentDay = strtolower($dateTime->format('l'));
+            
+            // Check if we have any opening hours configured
+            $openingHours = $this->opening_hours ?? [];
+            if (empty($openingHours)) {
+                return 'No hours configured';
+            }
+            
+            // Check if today has hours configured
+            if (!isset($openingHours[$currentDay]) || 
+                !isset($openingHours[$currentDay]['enabled']) || 
+                !$openingHours[$currentDay]['enabled'] ||
+                empty($openingHours[$currentDay]['hours'])) {
+                return 'Closed today';
+            }
             
             if ($this->isOpen($dateTime)) {
                 try {
@@ -245,13 +265,23 @@ trait HasOpeningHours
                 return 'Closed';
             }
         } catch (\Exception $e) {
-            return 'Status unavailable';
+            return 'Status unavailable: ' . $e->getMessage();
         }
     }
 
     protected function getTimezone(): string
     {
         return $this->timezone ?? config('filament-opening-hours.default_timezone', 'Africa/Algiers');
+    }
+    
+    public function debugOpeningHours(): array
+    {
+        return [
+            'raw_opening_hours' => $this->opening_hours,
+            'raw_exceptions' => $this->opening_hours_exceptions,
+            'enabled' => $this->opening_hours_enabled ?? true,
+            'timezone' => $this->getTimezone(),
+        ];
     }
 
     public function addException(string $date, array $hours = []): self
