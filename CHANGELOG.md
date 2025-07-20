@@ -2,6 +2,49 @@
 
 All notable changes to `filament-opening-hours` will be documented in this file.
 
+## v2.1.0 - 2025-07-20
+
+### ✨ Enhanced Exception Management with Date Ranges
+
+#### New Date Range Features
+- **NEW:** Date range support for exceptions (e.g., July 1-15 vacation period)
+- **NEW:** Three date modes: Single Date, Date Range, Recurring Annual
+- **NEW:** Range validation with end date must be after start date
+- **NEW:** Smart range processing for spatie/opening-hours compatibility
+- **NEW:** Range badges in exception display (📆 Range, 🔄 Annual, 📅 Single)
+
+#### Enhanced Exception Interface
+- **IMPROVED:** Modal form with date mode selector
+- **IMPROVED:** Range date picker with clear validation messages
+- **IMPROVED:** Exception list formatting with range indicators
+- **IMPROVED:** Better sorting: single dates → ranges → recurring
+- **IMPROVED:** Enhanced infolist display with range formatting
+
+#### Examples of New Functionality
+```php
+// Single Date Exception
+"December 25, 2024" → Christmas Day (Holiday - Closed)
+
+// Date Range Exception  
+"July 1-15, 2024" → Summer Vacation (Closed for 15 days)
+
+// Recurring Annual Exception
+"Every December 25" → Annual Christmas Holiday
+```
+
+#### Technical Improvements
+- **ENHANCED:** Dual storage system for UI display and spatie library compatibility
+- **ENHANCED:** Range processing that creates individual dates while maintaining range metadata
+- **ENHANCED:** Improved exception filtering and display logic
+- **ENHANCED:** Better data handling in HasOpeningHours trait
+
+### Backward Compatibility
+- ✅ Existing single date exceptions continue to work unchanged
+- ✅ Existing recurring exceptions (MM-DD format) still supported
+- ✅ No breaking changes to API or component usage
+
+---
+
 ## v2.0.0 - 2025-07-20
 
 ### 🎉 MEGA UPDATE: Premium Features That Exceed Paid Plugins!
