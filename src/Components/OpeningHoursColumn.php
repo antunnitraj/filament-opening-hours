@@ -9,7 +9,7 @@ class OpeningHoursColumn extends Column
 {
     protected string $view = 'filament-opening-hours::components.opening-hours-column';
 
-    protected string | Closure $displayMode = 'circular';
+    protected string | Closure $displayMode = 'status';
     protected bool | Closure $showTooltips = true;
     protected bool | Closure $showCurrentStatus = true;
     protected string | Closure | null $timezone = null;

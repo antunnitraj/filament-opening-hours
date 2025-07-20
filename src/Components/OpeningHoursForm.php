@@ -37,9 +37,29 @@ class OpeningHoursForm
                             
                         Toggle::make('opening_hours_enabled')
                             ->label('Enable Business Hours')
-                            ->helperText('Turn this ON to activate business hours. You can configure hours and exceptions below first, then enable when ready.')
+                            ->helperText('Automatically enabled when hours are configured. Turn off to temporarily disable.')
                             ->default(true)
                             ->live()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, $set, $get) {
+                                // Auto-enable if any hours are configured
+                                if (!$state) {
+                                    $openingHours = $get('opening_hours') ?? [];
+                                    $hasHours = false;
+                                    
+                                    foreach ($openingHours as $dayData) {
+                                        if (isset($dayData['enabled']) && $dayData['enabled'] && 
+                                            isset($dayData['hours']) && !empty($dayData['hours'])) {
+                                            $hasHours = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if ($hasHours) {
+                                        $set('opening_hours_enabled', true);
+                                    }
+                                }
+                            })
                             ->columnSpan(1),
                     ]),
                 ])
@@ -353,6 +373,13 @@ Use the "Add Exception" button above to add:
                                             ->required()
                                             ->seconds(false)
                                             ->displayFormat('H:i')
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, $set, $get) {
+                                                // Auto-enable business hours when time is set
+                                                if ($state) {
+                                                    $set('opening_hours_enabled', true);
+                                                }
+                                            })
                                             ->columnSpan(1),
 
                                         TimePicker::make('to')
@@ -361,6 +388,13 @@ Use the "Add Exception" button above to add:
                                             ->seconds(false)
                                             ->displayFormat('H:i')
                                             ->after('from')
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, $set, $get) {
+                                                // Auto-enable business hours when time is set
+                                                if ($state) {
+                                                    $set('opening_hours_enabled', true);
+                                                }
+                                            })
                                             ->columnSpan(1),
 
                                         Placeholder::make('duration')
