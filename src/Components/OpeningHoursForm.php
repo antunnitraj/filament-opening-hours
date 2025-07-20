@@ -229,21 +229,21 @@ class OpeningHoursForm extends Component
         return $state;
     }
 
-    public function dehydrateState(mixed $state, bool $isDehydrated = false): mixed
+    public function dehydrateState(array &$state, bool $isDehydrated = true): void
     {
         // This method is called when saving the form
         // We want to split the data into two separate fields
-        if (is_array($state)) {
-            $this->evaluate(function () use ($state) {
-                if (isset($state['opening_hours'])) {
-                    $this->getLivewire()->data['opening_hours'] = $state['opening_hours'];
+        if (is_array($state) && isset($state[$this->getName()])) {
+            $componentState = $state[$this->getName()];
+            
+            if (is_array($componentState)) {
+                if (isset($componentState['opening_hours'])) {
+                    $state['opening_hours'] = $componentState['opening_hours'];
                 }
-                if (isset($state['opening_hours_exceptions'])) {
-                    $this->getLivewire()->data['opening_hours_exceptions'] = $state['opening_hours_exceptions'];
+                if (isset($componentState['opening_hours_exceptions'])) {
+                    $state['opening_hours_exceptions'] = $componentState['opening_hours_exceptions'];
                 }
-            });
+            }
         }
-
-        return $state;
     }
 }
