@@ -1,13 +1,22 @@
-/* Opening Hours Plugin Styles */
+/* ===================================
+   Filament Opening Hours Plugin Styles
+   =================================== */
 
+/* Form Component Styles */
 .fi-fo-opening-hours {
-    /* Form styles */
+    /* Base form container */
 }
 
 .fi-fo-opening-hours .fi-section {
     border: 1px solid rgb(229 231 235);
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     background: rgb(249 250 251);
+    transition: all 0.3s ease;
+}
+
+.fi-fo-opening-hours .fi-section:hover {
+    border-color: rgb(209 213 219);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .dark .fi-fo-opening-hours .fi-section {
@@ -15,57 +24,342 @@
     background: rgb(17 24 39);
 }
 
-.fi-ta-opening-hours {
-    /* Table column styles */
+.dark .fi-fo-opening-hours .fi-section:hover {
+    border-color: rgb(75 85 99);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-.fi-ta-opening-hours .h-2 {
-    width: 0.5rem;
-    height: 0.5rem;
+/* Enhanced Section Headers */
+.fi-fo-opening-hours .fi-section-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgb(229 231 235);
+    background: linear-gradient(90deg, rgb(249 250 251) 0%, rgb(255 255 255) 100%);
 }
 
+.dark .fi-fo-opening-hours .fi-section-header {
+    border-bottom-color: rgb(55 65 81);
+    background: linear-gradient(90deg, rgb(17 24 39) 0%, rgb(31 41 55) 100%);
+}
+
+/* Day Component Styling */
+.fi-fo-opening-hours .day-component {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(229 231 235);
+    background: rgb(255 255 255);
+    transition: all 0.2s ease;
+}
+
+.fi-fo-opening-hours .day-component.enabled {
+    border-color: rgb(34 197 94);
+    background: rgb(240 253 244);
+}
+
+.dark .fi-fo-opening-hours .day-component {
+    border-color: rgb(55 65 81);
+    background: rgb(31 41 55);
+}
+
+.dark .fi-fo-opening-hours .day-component.enabled {
+    border-color: rgb(34 197 94);
+    background: rgb(20 83 45);
+}
+
+/* Time Picker Enhancements */
+.fi-fo-opening-hours .fi-input-wrapper {
+    position: relative;
+}
+
+.fi-fo-opening-hours .fi-input-wrapper::before {
+    content: '🕐';
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Table Column Styles */
+.fi-ta-opening-hours-column {
+    min-width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fi-ta-opening-hours-column svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: all 0.3s ease;
+}
+
+.fi-ta-opening-hours-column svg:hover {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+    transform: scale(1.05);
+}
+
+.dark .fi-ta-opening-hours-column svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.dark .fi-ta-opening-hours-column svg:hover {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* Circular Display Enhancements */
+.opening-hours-circle {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.opening-hours-circle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.dark .opening-hours-circle {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+}
+
+/* Status Badges */
+.opening-hours-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+}
+
+.opening-hours-badge.status-open {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.opening-hours-badge.status-closed {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.opening-hours-badge.status-unknown {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
+}
+
+/* Infolist Entry Styles */
 .fi-in-opening-hours {
-    /* Infolist entry styles */
+    /* Base infolist container */
 }
 
 .fi-in-opening-hours h4 {
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: rgb(55 65 81);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-/* Status indicator colors */
-.bg-success-500 {
-    background-color: rgb(34 197 94);
+.dark .fi-in-opening-hours h4 {
+    color: rgb(209 213 219);
 }
 
-.bg-danger-500 {
-    background-color: rgb(239 68 68);
+/* Status Section Styling */
+.opening-hours-status-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
 }
 
-.bg-gray-500 {
-    background-color: rgb(107 114 128);
+.opening-hours-status-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
 }
 
-.text-success-600 {
-    color: rgb(22 163 74);
+.dark .opening-hours-status-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
 }
 
-.text-danger-600 {
-    color: rgb(220 38 38);
+/* Weekly Schedule Grid */
+.opening-hours-weekly-grid {
+    display: grid;
+    gap: 0.5rem;
 }
 
-.text-gray-600 {
-    color: rgb(75 85 99);
+.opening-hours-day-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    transition: all 0.2s ease;
 }
 
-.dark .text-success-400 {
-    color: rgb(74 222 128);
+.opening-hours-day-row:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.dark .text-danger-400 {
-    color: rgb(248 113 113);
+.opening-hours-day-row.today {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
 }
 
-.dark .text-gray-400 {
-    color: rgb(156 163 175);
+.dark .opening-hours-day-row {
+    border-color: #374151;
+    background: #1f2937;
+}
+
+.dark .opening-hours-day-row:hover {
+    border-color: #4b5563;
+}
+
+.dark .opening-hours-day-row.today {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+}
+
+/* Exception Cards */
+.opening-hours-exception-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.opening-hours-exception-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.dark .opening-hours-exception-card {
+    border-color: #374151;
+    background: #1f2937;
+}
+
+.dark .opening-hours-exception-card:hover {
+    border-color: #4b5563;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Animations */
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.animate-pulse-dot {
+    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes status-indicator {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+.status-indicator-open {
+    animation: status-indicator 1s ease-out forwards;
+}
+
+/* Tooltips Enhancement */
+[x-tooltip] {
+    cursor: help;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+    .fi-ta-opening-hours-column {
+        min-width: 60px;
+    }
+    
+    .opening-hours-circle {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .opening-hours-status-section {
+        padding: 1rem;
+    }
+    
+    .opening-hours-day-row {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .fi-ta-opening-hours-column svg {
+        filter: none !important;
+    }
+    
+    .opening-hours-status-section::before {
+        display: none;
+    }
+    
+    .animate-pulse-dot {
+        animation: none;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .fi-fo-opening-hours .fi-section {
+        border-width: 2px;
+    }
+    
+    .opening-hours-badge {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .fi-ta-opening-hours-column svg,
+    .opening-hours-circle,
+    .opening-hours-day-row,
+    .opening-hours-exception-card {
+        transition: none !important;
+    }
+    
+    .animate-pulse-dot,
+    .status-indicator-open {
+        animation: none !important;
+    }
 }
