@@ -95,7 +95,7 @@ class OpeningHoursEntry extends Entry
         if (!method_exists($record, 'openingHours')) {
             return [
                 'status' => 'not_configured',
-                'current_status' => 'Business hours not configured',
+                'current_status' => __('filament-opening-hours::opening-hours.no_hours_configured'),
                 'is_open' => false,
                 'weekly_hours' => [],
                 'exceptions' => [],
@@ -111,7 +111,7 @@ class OpeningHoursEntry extends Entry
             if (isset($record->opening_hours_enabled) && !$record->opening_hours_enabled) {
                 return [
                     'status' => 'disabled',
-                    'current_status' => 'Business hours disabled',
+                    'current_status' => __('filament-opening-hours::opening-hours.business_hours_disabled'),
                     'is_open' => false,
                     'weekly_hours' => [],
                     'exceptions' => [],
@@ -121,14 +121,14 @@ class OpeningHoursEntry extends Entry
             
             $data = [
                 'status' => 'closed',
-                'current_status' => 'Closed',
+                'current_status' => __('filament-opening-hours::opening-hours.closed_status'),
                 'is_open' => false,
                 'weekly_hours' => [],
                 'exceptions' => [],
                 'timezone' => $timezone,
                 'next_open' => null,
                 'next_close' => null,
-                'last_updated' => $now->format('M j, Y \a\t H:i'),
+                'last_updated' => $this->formatDateForLocale($now, 'M j, Y \a\t H:i'),
             ];
             
             // Safely get status
@@ -138,18 +138,18 @@ class OpeningHoursEntry extends Entry
                 $data['current_status'] = $record->getCurrentStatus();
             } catch (\Exception $e) {
                 // Keep default closed status if spatie fails
-                $data['current_status'] = 'Status unavailable';
+                $data['current_status'] = __('filament-opening-hours::opening-hours.status_unavailable');
             }
 
             // Get weekly hours
             $days = [
-                'monday' => 'Monday',
-                'tuesday' => 'Tuesday',
-                'wednesday' => 'Wednesday',
-                'thursday' => 'Thursday',
-                'friday' => 'Friday',
-                'saturday' => 'Saturday',
-                'sunday' => 'Sunday',
+                'monday' => __('filament-opening-hours::opening-hours.days.monday'),
+                'tuesday' => __('filament-opening-hours::opening-hours.days.tuesday'),
+                'wednesday' => __('filament-opening-hours::opening-hours.days.wednesday'),
+                'thursday' => __('filament-opening-hours::opening-hours.days.thursday'),
+                'friday' => __('filament-opening-hours::opening-hours.days.friday'),
+                'saturday' => __('filament-opening-hours::opening-hours.days.saturday'),
+                'sunday' => __('filament-opening-hours::opening-hours.days.sunday'),
             ];
 
             foreach ($days as $key => $label) {
@@ -158,7 +158,7 @@ class OpeningHoursEntry extends Entry
                     'label' => $label,
                     'hours' => $dayHours,
                     'is_open' => !empty($dayHours),
-                    'formatted' => empty($dayHours) ? 'Closed' : implode(', ', $dayHours),
+                    'formatted' => empty($dayHours) ? __('filament-opening-hours::opening-hours.closed_status') : implode(', ', $dayHours),
                     'is_today' => strtolower($now->format('l')) === $key,
                 ];
             }
@@ -197,29 +197,29 @@ class OpeningHoursEntry extends Entry
                     
                     if (isset($exceptionData['is_range_header']) && $exceptionData['is_range_header']) {
                         // This is a range header - display the range
-                        $startDate = \Carbon\Carbon::parse($exceptionData['start_date'])->format('M j');
-                        $endDate = \Carbon\Carbon::parse($exceptionData['end_date'])->format('M j, Y');
+                        $startDate = $this->formatDateForLocale(\Carbon\Carbon::parse($exceptionData['start_date']), 'M j');
+                        $endDate = $this->formatDateForLocale(\Carbon\Carbon::parse($exceptionData['end_date']), 'M j, Y');
                         $formattedDate = "{$startDate} - {$endDate}";
                         $dateMode = 'range';
                     } elseif (isset($exceptionData['is_range']) && $exceptionData['is_range']) {
                         // This is a range item (shouldn't display if we have header)
-                        $startDate = \Carbon\Carbon::parse($exceptionData['start_date'])->format('M j');
-                        $endDate = \Carbon\Carbon::parse($exceptionData['end_date'])->format('M j, Y');
+                        $startDate = $this->formatDateForLocale(\Carbon\Carbon::parse($exceptionData['start_date']), 'M j');
+                        $endDate = $this->formatDateForLocale(\Carbon\Carbon::parse($exceptionData['end_date']), 'M j, Y');
                         $formattedDate = "{$startDate} - {$endDate}";
                         $dateMode = 'range';
                     } elseif (isset($exceptionData['recurring']) && $exceptionData['recurring']) {
                         // Recurring annual
-                        $formattedDate = "Every " . \Carbon\Carbon::parse($exceptionData['date'])->format('F j');
+                        $formattedDate = __('filament-opening-hours::opening-hours.every') . ' ' . $this->formatDateForLocale(\Carbon\Carbon::parse($exceptionData['date']), 'F j');
                         $dateMode = 'recurring';
                         $isRecurring = true;
                     } elseif (strlen($date) === 5) {
                         // MM-DD format (legacy recurring)
-                        $formattedDate = "Every " . \Carbon\Carbon::createFromFormat('m-d', $date)->format('F j');
+                        $formattedDate = __('filament-opening-hours::opening-hours.every') . ' ' . $this->formatDateForLocale(\Carbon\Carbon::createFromFormat('m-d', $date), 'F j');
                         $dateMode = 'recurring';
                         $isRecurring = true;
                     } else {
                         // Single date
-                        $formattedDate = \Carbon\Carbon::parse($date)->format('M j, Y');
+                        $formattedDate = $this->formatDateForLocale(\Carbon\Carbon::parse($date), 'M j, Y');
                         $dateMode = 'single';
                     }
                     
@@ -232,7 +232,7 @@ class OpeningHoursEntry extends Entry
                         'hours' => $exceptionData['hours'] ?? [],
                         'is_recurring' => $isRecurring,
                         'date_mode' => $dateMode,
-                        'formatted_hours' => empty($exceptionData['hours']) ? 'Closed' : 
+                        'formatted_hours' => empty($exceptionData['hours']) ? __('filament-opening-hours::opening-hours.closed_status') : 
                             collect($exceptionData['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->join(', '),
                     ];
                 }
@@ -255,7 +255,7 @@ class OpeningHoursEntry extends Entry
             // Get next open/close times with error handling
             try {
                 if ($nextOpen = $record->nextOpen()) {
-                    $data['next_open'] = $nextOpen->format('M j, Y \a\t H:i');
+                    $data['next_open'] = $this->formatDateForLocale($nextOpen, 'M j, Y \a\t H:i');
                 }
             } catch (\Exception $e) {
                 // Ignore nextOpen errors
@@ -263,7 +263,7 @@ class OpeningHoursEntry extends Entry
             
             try {
                 if ($nextClose = $record->nextClose()) {
-                    $data['next_close'] = $nextClose->format('M j, Y \a\t H:i');
+                    $data['next_close'] = $this->formatDateForLocale($nextClose, 'M j, Y \a\t H:i');
                 }
             } catch (\Exception $e) {
                 // Ignore nextClose errors
@@ -274,7 +274,7 @@ class OpeningHoursEntry extends Entry
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
-                'current_status' => 'Error loading business hours',
+                'current_status' => __('filament-opening-hours::opening-hours.error_loading_hours'),
                 'is_open' => false,
                 'weekly_hours' => [],
                 'exceptions' => [],
@@ -308,5 +308,20 @@ class OpeningHoursEntry extends Entry
             'error' => 'warning',
             default => 'gray',
         };
+    }
+
+    protected function formatDateForLocale(\\Carbon\\Carbon $date, string $format): string
+    {
+        // Get current application locale
+        $locale = app()->getLocale();
+        
+        // Set Carbon locale based on application locale
+        $carbonLocale = match($locale) {
+            'ar' => 'ar',
+            'fr' => 'fr',
+            default => 'en',
+        };
+        
+        return $date->locale($carbonLocale)->translatedFormat($format);
     }
 }

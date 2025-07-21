@@ -28,15 +28,15 @@
                         text-red-700 dark:text-red-400
                     @endif">
                     @if ($businessData['is_open'])
-                        Open
+                        {{ __('filament-opening-hours::opening-hours.open_status') }}
                     @elseif ($businessData['status'] === 'not_configured')
-                        Not configured
+                        {{ __('filament-opening-hours::opening-hours.not_configured') }}
                     @elseif ($businessData['status'] === 'disabled')
-                        Disabled
+                        {{ __('filament-opening-hours::opening-hours.disabled') }}
                     @elseif ($businessData['status'] === 'error')
-                        Error
+                        {{ __('filament-opening-hours::opening-hours.error') }}
                     @else
-                        Closed
+                        {{ __('filament-opening-hours::opening-hours.closed_status') }}
                     @endif
                 </span>
             </div>
@@ -67,17 +67,17 @@
                     bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                 @endif"
                 @if ($showTooltips && isset($businessData['next_open']) && isset($businessData['next_close']))
-                    title="Next: {{ $businessData['is_open'] ? 'Closes at ' . $businessData['next_close'] : 'Opens at ' . $businessData['next_open'] }}"
+                    title="{{ __('filament-opening-hours::opening-hours.next') }}: {{ $businessData['is_open'] ? __('filament-opening-hours::opening-hours.closes_at') . ' ' . $businessData['next_close'] : __('filament-opening-hours::opening-hours.opens_at') . ' ' . $businessData['next_open'] }}"
                 @endif
             >
                 @if ($businessData['is_open'])
-                    Open
+                    {{ __('filament-opening-hours::opening-hours.open_status') }}
                 @elseif ($businessData['status'] === 'not_configured')
-                    Not configured
+                    {{ __('filament-opening-hours::opening-hours.not_configured') }}
                 @elseif ($businessData['status'] === 'disabled')
-                    Disabled
+                    {{ __('filament-opening-hours::opening-hours.disabled') }}
                 @else
-                    Closed
+                    {{ __('filament-opening-hours::opening-hours.closed_status') }}
                 @endif
             </span>
         </div>

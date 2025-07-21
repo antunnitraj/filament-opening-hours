@@ -225,7 +225,7 @@ trait HasOpeningHours
         try {
             // Check if business hours are enabled
             if (isset($this->opening_hours_enabled) && !$this->opening_hours_enabled) {
-                return 'Business hours disabled';
+                return __('filament-opening-hours::opening-hours.business_hours_disabled');
             }
             
             $dateTime = $dateTime ?? now($this->getTimezone());
@@ -234,7 +234,7 @@ trait HasOpeningHours
             // Check if we have any opening hours configured
             $openingHours = $this->opening_hours ?? [];
             if (empty($openingHours)) {
-                return 'No hours configured';
+                return __('filament-opening-hours::opening-hours.no_hours_configured');
             }
             
             // Check if today has hours configured
@@ -242,30 +242,30 @@ trait HasOpeningHours
                 !isset($openingHours[$currentDay]['enabled']) || 
                 !$openingHours[$currentDay]['enabled'] ||
                 empty($openingHours[$currentDay]['hours'])) {
-                return 'Closed today';
+                return __('filament-opening-hours::opening-hours.closed_today');
             }
             
             if ($this->isOpen($dateTime)) {
                 try {
                     $nextClose = $this->nextClose($dateTime);
                     return $nextClose 
-                        ? "Open until {$nextClose->format('H:i')}"
-                        : 'Open';
+                        ? __('filament-opening-hours::opening-hours.open_until', ['time' => $this->formatDateForLocale($nextClose, 'H:i')])
+                        : __('filament-opening-hours::opening-hours.open_status');
                 } catch (\Exception $e) {
-                    return 'Open';
+                    return __('filament-opening-hours::opening-hours.open_status');
                 }
             }
 
             try {
                 $nextOpen = $this->nextOpen($dateTime);
                 return $nextOpen 
-                    ? "Closed until {$nextOpen->format('H:i')}"
-                    : 'Closed';
+                    ? __('filament-opening-hours::opening-hours.closed_until', ['time' => $this->formatDateForLocale($nextOpen, 'H:i')])
+                    : __('filament-opening-hours::opening-hours.closed_status');
             } catch (\Exception $e) {
-                return 'Closed';
+                return __('filament-opening-hours::opening-hours.closed_status');
             }
         } catch (\Exception $e) {
-            return 'Status unavailable: ' . $e->getMessage();
+            return __('filament-opening-hours::opening-hours.status_unavailable') . ': ' . $e->getMessage();
         }
     }
 
@@ -318,5 +318,20 @@ trait HasOpeningHours
     {
         $exceptions = $this->opening_hours_exceptions ?? [];
         return $exceptions[$date] ?? null;
+    }
+
+    protected function formatDateForLocale(\\Carbon\\Carbon $date, string $format): string
+    {
+        // Get current application locale
+        $locale = app()->getLocale();
+        
+        // Set Carbon locale based on application locale
+        $carbonLocale = match($locale) {
+            'ar' => 'ar',
+            'fr' => 'fr',
+            default => 'en',
+        };
+        
+        return $date->locale($carbonLocale)->translatedFormat($format);
     }
 }

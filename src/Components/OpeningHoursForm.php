@@ -20,24 +20,24 @@ class OpeningHoursForm
     public static function schema(): array
     {
         return [
-            Section::make('Business Hours Configuration')
-                ->description('Set your timezone and enable/disable business hours functionality')
+            Section::make(__('filament-opening-hours::opening-hours.business_hours_configuration'))
+                ->description(__('filament-opening-hours::opening-hours.business_hours_configuration_description'))
                 ->icon('heroicon-o-clock')
                 ->schema([
                     Grid::make(2)->schema([
                         Select::make('timezone')
-                            ->label('Timezone')
+                            ->label(__('filament-opening-hours::opening-hours.timezone'))
                             ->options(collect(timezone_identifiers_list())->mapWithKeys(function ($timezone) {
                                 return [$timezone => str_replace('_', ' ', $timezone)];
                             })->toArray())
                             ->searchable()
                             ->default('Africa/Algiers')
-                            ->helperText('Select your business timezone')
+                            ->helperText(__('filament-opening-hours::opening-hours.timezone_help'))
                             ->columnSpan(1),
                             
                         Toggle::make('opening_hours_enabled')
-                            ->label('Enable Business Hours')
-                            ->helperText('Automatically enabled when hours are configured. Turn off to temporarily disable.')
+                            ->label(__('filament-opening-hours::opening-hours.enable_business_hours'))
+                            ->helperText(__('filament-opening-hours::opening-hours.enable_business_hours_help'))
                             ->default(true)
                             ->live()
                             ->reactive()
@@ -66,10 +66,10 @@ class OpeningHoursForm
                 ->collapsible()
                 ->persistCollapsed(),
 
-            Section::make('Weekly Schedule')
+            Section::make(__('filament-opening-hours::opening-hours.weekly_schedule'))
                 ->description(fn ($get) => $get('opening_hours_enabled') 
-                    ? 'Set your regular weekly operating hours' 
-                    : '⚠️ Business hours are disabled - Configure hours below, then enable above to activate')
+                    ? __('filament-opening-hours::opening-hours.weekly_schedule_description') 
+                    : __('filament-opening-hours::opening-hours.weekly_schedule_description_disabled'))
                 ->icon('heroicon-o-calendar-days')
                 ->schema([
                     Grid::make(1)->schema(self::getDayComponents()),
@@ -77,24 +77,24 @@ class OpeningHoursForm
                 ->collapsible()
                 ->persistCollapsed(),
 
-            Section::make('Exceptions & Special Hours')
+            Section::make(__('filament-opening-hours::opening-hours.exceptions_special_hours'))
                 ->description(fn ($get) => $get('opening_hours_enabled') 
-                    ? 'Manage holidays, special dates, and irregular hours' 
-                    : '⚠️ Business hours are disabled - Configure exceptions below, then enable above to activate')
+                    ? __('filament-opening-hours::opening-hours.exceptions_special_hours_description') 
+                    : __('filament-opening-hours::opening-hours.exceptions_special_hours_description_disabled'))
                 ->icon('heroicon-o-exclamation-triangle')
                 ->headerActions([
                     Actions\Action::make('add_exception')
-                        ->label('Add Exception')
+                        ->label(__('filament-opening-hours::opening-hours.add_exception'))
                         ->icon('heroicon-o-plus')
                         ->color('primary')
                         ->form([
                             Grid::make(3)->schema([
                                 Select::make('date_mode')
-                                    ->label('Date Mode')
+                                    ->label(__('filament-opening-hours::opening-hours.date_mode'))
                                     ->options([
-                                        'single' => 'Single Date',
-                                        'range' => 'Date Range',
-                                        'recurring' => 'Recurring Annual',
+                                        'single' => __('filament-opening-hours::opening-hours.single_date'),
+                                        'range' => __('filament-opening-hours::opening-hours.date_range'),
+                                        'recurring' => __('filament-opening-hours::opening-hours.recurring_annual'),
                                     ])
                                     ->default('single')
                                     ->live()
@@ -102,13 +102,13 @@ class OpeningHoursForm
                                     ->columnSpan(1),
 
                                 Select::make('exception_type')
-                                    ->label('Exception Type')
+                                    ->label(__('filament-opening-hours::opening-hours.exception_type'))
                                     ->options([
-                                        'closed' => 'Closed',
-                                        'holiday' => 'Holiday',
-                                        'special_hours' => 'Special Hours',
-                                        'maintenance' => 'Maintenance',
-                                        'event' => 'Special Event',
+                                        'closed' => __('filament-opening-hours::opening-hours.closed'),
+                                        'holiday' => __('filament-opening-hours::opening-hours.holiday'),
+                                        'special_hours' => __('filament-opening-hours::opening-hours.special_hours_type'),
+                                        'maintenance' => __('filament-opening-hours::opening-hours.maintenance'),
+                                        'event' => __('filament-opening-hours::opening-hours.event'),
                                     ])
                                     ->default('closed')
                                     ->live()
@@ -119,76 +119,76 @@ class OpeningHoursForm
                             // Single Date
                             Grid::make(1)->schema([
                                 DatePicker::make('exception_date')
-                                    ->label('Date')
+                                    ->label(__('filament-opening-hours::opening-hours.date'))
                                     ->required()
-                                    ->helperText('Select a specific date for this exception'),
+                                    ->helperText(__('filament-opening-hours::opening-hours.date_help')),
                             ])->visible(fn ($get) => $get('date_mode') === 'single'),
 
                             // Date Range
                             Grid::make(2)->schema([
                                 DatePicker::make('start_date')
-                                    ->label('Start Date')
+                                    ->label(__('filament-opening-hours::opening-hours.start_date'))
                                     ->required()
                                     ->live()
                                     ->columnSpan(1),
 
                                 DatePicker::make('end_date')
-                                    ->label('End Date')
+                                    ->label(__('filament-opening-hours::opening-hours.end_date'))
                                     ->required()
                                     ->after('start_date')
-                                    ->helperText('Exception will apply to all dates in this range')
+                                    ->helperText(__('filament-opening-hours::opening-hours.range_help'))
                                     ->columnSpan(1),
                             ])->visible(fn ($get) => $get('date_mode') === 'range'),
 
                             // Recurring Annual
                             Grid::make(2)->schema([
                                 DatePicker::make('recurring_date')
-                                    ->label('Annual Date')
+                                    ->label(__('filament-opening-hours::opening-hours.annual_date'))
                                     ->required()
-                                    ->helperText('This exception will repeat every year on this date')
+                                    ->helperText(__('filament-opening-hours::opening-hours.annual_help'))
                                     ->columnSpan(2),
                             ])->visible(fn ($get) => $get('date_mode') === 'recurring'),
 
                             Grid::make(1)->schema([
                                 TextInput::make('exception_label')
-                                    ->label('Custom Label')
-                                    ->placeholder('e.g., Christmas Day, Staff Training, etc.')
+                                    ->label(__('filament-opening-hours::opening-hours.custom_label'))
+                                    ->placeholder(__('filament-opening-hours::opening-hours.label_placeholder'))
                                     ->maxLength(100),
 
                                 TextInput::make('exception_note')
-                                    ->label('Description')
-                                    ->placeholder('Additional details about this exception')
+                                    ->label(__('filament-opening-hours::opening-hours.description'))
+                                    ->placeholder(__('filament-opening-hours::opening-hours.description_placeholder'))
                                     ->maxLength(255),
                             ]),
 
-                            Section::make('Special Hours')
-                                ->description('Define custom hours for this date')
+                            Section::make(__('filament-opening-hours::opening-hours.special_hours'))
+                                ->description(__('filament-opening-hours::opening-hours.special_hours_description'))
                                 ->schema([
                                     Repeater::make('exception_hours')
                                         ->schema([
                                             Grid::make(2)->schema([
                                                 TimePicker::make('from')
-                                                    ->label('From')
+                                                    ->label(__('filament-opening-hours::opening-hours.from'))
                                                     ->required()
                                                     ->seconds(false)
                                                     ->displayFormat('H:i'),
 
                                                 TimePicker::make('to')
-                                                    ->label('To')
+                                                    ->label(__('filament-opening-hours::opening-hours.to'))
                                                     ->required()
                                                     ->seconds(false)
                                                     ->displayFormat('H:i')
                                                     ->after('from'),
                                             ]),
                                         ])
-                                        ->addActionLabel('Add Time Slot')
+                                        ->addActionLabel(__('filament-opening-hours::opening-hours.add_time_slot'))
                                         ->reorderableWithButtons()
                                         ->collapsible()
                                         ->defaultItems(0)
                                         ->itemLabel(fn (array $state): ?string => 
                                             isset($state['from'], $state['to']) 
                                                 ? "{$state['from']} - {$state['to']}" 
-                                                : 'New Time Slot'
+                                                : __('filament-opening-hours::opening-hours.new_time_slot')
                                         ),
                                 ])
                                 ->visible(fn ($get) => $get('exception_type') === 'special_hours'),
@@ -259,18 +259,9 @@ class OpeningHoursForm
                             
                             if (empty($exceptions)) {
                                 $enabled = $get('opening_hours_enabled');
-                                $statusText = $enabled ? '' : '
-
-⚠️ **Note:** Business hours are currently disabled. You can configure exceptions now, then enable business hours above to activate them.';
+                                $statusText = $enabled ? '' : __('filament-opening-hours::opening-hours.no_exceptions_configured_disabled');
                                 
-                                return '📝 **No exceptions configured yet**
-
-Use the "Add Exception" button above to add:
-• 📅 **Single dates** - Specific holidays or closures
-• 📆 **Date ranges** - Vacation periods or seasonal changes  
-• 🔄 **Recurring dates** - Annual holidays that repeat
-
-*Examples: Christmas Day, Summer vacation (July 1-15), Every New Year*' . $statusText;
+                                return __('filament-opening-hours::opening-hours.no_exceptions_configured') . $statusText;
                             }
 
                             $output = [];
@@ -342,25 +333,25 @@ Use the "Add Exception" button above to add:
     protected static function getDayComponents(): array
     {
         $days = [
-            'monday' => ['label' => 'Monday', 'icon' => '📅'],
-            'tuesday' => ['label' => 'Tuesday', 'icon' => '📅'],
-            'wednesday' => ['label' => 'Wednesday', 'icon' => '📅'],
-            'thursday' => ['label' => 'Thursday', 'icon' => '📅'],
-            'friday' => ['label' => 'Friday', 'icon' => '📅'],
-            'saturday' => ['label' => 'Saturday', 'icon' => '🎯'],
-            'sunday' => ['label' => 'Sunday', 'icon' => '🎯'],
+            'monday' => ['label' => __('filament-opening-hours::opening-hours.monday'), 'icon' => '📅'],
+            'tuesday' => ['label' => __('filament-opening-hours::opening-hours.tuesday'), 'icon' => '📅'],
+            'wednesday' => ['label' => __('filament-opening-hours::opening-hours.wednesday'), 'icon' => '📅'],
+            'thursday' => ['label' => __('filament-opening-hours::opening-hours.thursday'), 'icon' => '📅'],
+            'friday' => ['label' => __('filament-opening-hours::opening-hours.friday'), 'icon' => '📅'],
+            'saturday' => ['label' => __('filament-opening-hours::opening-hours.saturday'), 'icon' => '🎯'],
+            'sunday' => ['label' => __('filament-opening-hours::opening-hours.sunday'), 'icon' => '🎯'],
         ];
 
         $components = [];
 
         foreach ($days as $key => $config) {
             $components[] = Section::make($config['label'])
-                ->description("Configure {$config['label']} operating hours")
+                ->description(__('filament-opening-hours::opening-hours.configure_day_hours', ['day' => $config['label']]))
                 ->icon('heroicon-o-clock')
                 ->schema([
                     Grid::make(12)->schema([
                         Toggle::make("opening_hours.{$key}.enabled")
-                            ->label('Open')
+                            ->label(__('filament-opening-hours::opening-hours.open'))
                             ->live()
                             ->columnSpan(2),
 
@@ -383,7 +374,7 @@ Use the "Add Exception" button above to add:
                                             ->columnSpan(1),
 
                                         TimePicker::make('to')
-                                            ->label('To')
+                                            ->label(__('filament-opening-hours::opening-hours.to'))
                                             ->required()
                                             ->seconds(false)
                                             ->displayFormat('H:i')
@@ -398,7 +389,7 @@ Use the "Add Exception" button above to add:
                                             ->columnSpan(1),
 
                                         Placeholder::make('duration')
-                                            ->label('Duration')
+                                            ->label(__('filament-opening-hours::opening-hours.duration'))
                                             ->content(function ($get) {
                                                 $from = $get('from');
                                                 $to = $get('to');
@@ -420,13 +411,13 @@ Use the "Add Exception" button above to add:
                                             ->columnSpan(1),
                                     ]),
                                 ])
-                                ->addActionLabel('Add Time Slot')
+                                ->addActionLabel(__('filament-opening-hours::opening-hours.add_time_slot'))
                                 ->reorderableWithButtons()
                                 ->defaultItems(0)
                                 ->itemLabel(fn (array $state): ?string => 
                                     isset($state['from'], $state['to']) 
                                         ? "⏰ {$state['from']} - {$state['to']}" 
-                                        : '➕ New Time Slot'
+                                        : '➕ ' . __('filament-opening-hours::opening-hours.new_time_slot')
                                 )
                                 ->collapsed(false),
                         ])

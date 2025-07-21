@@ -363,3 +363,128 @@
         animation: none !important;
     }
 }
+
+/* ===================================
+   RTL (Right-to-Left) Support for Arabic
+   =================================== */
+
+/* RTL Layout for Arabic */
+[dir="rtl"] .fi-fo-opening-hours .fi-section-header {
+    background: linear-gradient(270deg, rgb(249 250 251) 0%, rgb(255 255 255) 100%);
+}
+
+[dir="rtl"] .dark .fi-fo-opening-hours .fi-section-header {
+    background: linear-gradient(270deg, rgb(17 24 39) 0%, rgb(31 41 55) 100%);
+}
+
+/* RTL Time Picker Icon */
+[dir="rtl"] .fi-fo-opening-hours .fi-input-wrapper::before {
+    left: auto;
+    right: 0.75rem;
+}
+
+/* RTL Day Row Layout */
+[dir="rtl"] .opening-hours-day-row {
+    direction: rtl;
+}
+
+[dir="rtl"] .opening-hours-day-row .flex {
+    flex-direction: row-reverse;
+}
+
+/* RTL Exception Cards */
+[dir="rtl"] .opening-hours-exception-card {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .opening-hours-exception-card .flex {
+    flex-direction: row-reverse;
+}
+
+/* RTL Status Section */
+[dir="rtl"] .opening-hours-status-section {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .opening-hours-status-section .flex {
+    flex-direction: row-reverse;
+}
+
+/* RTL Badge Spacing */
+[dir="rtl"] .fi-in-opening-hours h4 {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .space-x-2 > * + * {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+[dir="rtl"] .space-x-3 > * + * {
+    margin-left: 0;
+    margin-right: 0.75rem;
+}
+
+/* RTL Form Grid Layout */
+[dir="rtl"] .fi-fo-grid {
+    direction: rtl;
+}
+
+/* RTL Table Column */
+[dir="rtl"] .fi-ta-opening-hours-column {
+    direction: rtl;
+}
+
+/* RTL Infolist Content */
+[dir="rtl"] .fi-in-opening-hours {
+    direction: rtl;
+    text-align: right;
+}
+
+/* RTL Specific Font for Better Arabic Support */
+[dir="rtl"] .fi-fo-opening-hours,
+[dir="rtl"] .fi-ta-opening-hours-column,
+[dir="rtl"] .fi-in-opening-hours {
+    font-family: 'Segoe UI', 'Tahoma', 'Arial', 'Helvetica Neue', sans-serif;
+}
+
+/* RTL Number and Time Display */
+[dir="rtl"] .opening-hours-time,
+[dir="rtl"] .opening-hours-duration {
+    direction: ltr;
+    display: inline-block;
+}
+
+/* RTL Badge Alignment */
+[dir="rtl"] .inline-flex {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .inline-flex.items-center {
+    gap: 0.5rem;
+}
+
+/* RTL Mobile Adjustments */
+@media (max-width: 640px) {
+    [dir="rtl"] .opening-hours-day-row {
+        padding: 0.5rem 0.75rem;
+        text-align: right;
+    }
+    
+    [dir="rtl"] .opening-hours-status-section {
+        padding: 1rem;
+        text-align: right;
+    }
+}
+
+/* RTL Print Styles */
+@media print {
+    [dir="rtl"] .fi-fo-opening-hours,
+    [dir="rtl"] .fi-ta-opening-hours-column,
+    [dir="rtl"] .fi-in-opening-hours {
+        direction: rtl;
+        text-align: right;
+    }
+}

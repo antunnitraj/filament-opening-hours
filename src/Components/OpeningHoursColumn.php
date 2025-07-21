@@ -84,7 +84,7 @@ class OpeningHoursColumn extends Column
         if (!method_exists($record, 'openingHours')) {
             return [
                 'status' => 'not_configured',
-                'current_status' => 'Not configured',
+                'current_status' => __('filament-opening-hours::opening-hours.not_configured'),
                 'is_open' => false,
                 'weekly_hours' => [],
                 'today_hours' => [],
@@ -101,7 +101,7 @@ class OpeningHoursColumn extends Column
             if (isset($record->opening_hours_enabled) && !$record->opening_hours_enabled) {
                 return [
                     'status' => 'disabled',
-                    'current_status' => 'Disabled',
+                    'current_status' => __('filament-opening-hours::opening-hours.business_hours_disabled'),
                     'is_open' => false,
                     'weekly_hours' => array_fill_keys(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], ['hours' => [], 'is_open' => false, 'formatted' => 'Disabled']),
                     'today_hours' => [],
@@ -113,7 +113,7 @@ class OpeningHoursColumn extends Column
             
             $data = [
                 'status' => 'closed',
-                'current_status' => 'Closed',
+                'current_status' => __('filament-opening-hours::opening-hours.closed_status'),
                 'is_open' => false,
                 'weekly_hours' => [],
                 'today_hours' => [],
@@ -129,7 +129,7 @@ class OpeningHoursColumn extends Column
                 $data['current_status'] = $record->getCurrentStatus();
             } catch (\Exception $e) {
                 // Keep default closed status if spatie fails
-                $data['current_status'] = 'Hours unavailable';
+                $data['current_status'] = __('filament-opening-hours::opening-hours.status_unavailable');
             }
 
             // Get weekly hours with better error handling
@@ -140,13 +140,13 @@ class OpeningHoursColumn extends Column
                     $data['weekly_hours'][$day] = [
                         'hours' => $dayHours,
                         'is_open' => !empty($dayHours),
-                        'formatted' => empty($dayHours) ? 'Closed' : implode(', ', $dayHours),
+                        'formatted' => empty($dayHours) ? __('filament-opening-hours::opening-hours.closed_status') : implode(', ', $dayHours),
                     ];
                 } catch (\Exception $e) {
                     $data['weekly_hours'][$day] = [
                         'hours' => [],
                         'is_open' => false,
-                        'formatted' => 'Error',
+                        'formatted' => __('filament-opening-hours::opening-hours.error_status'),
                     ];
                 }
             }
@@ -158,7 +158,7 @@ class OpeningHoursColumn extends Column
             // Get next open/close times with error handling
             try {
                 if ($nextOpen = $record->nextOpen()) {
-                    $data['next_open'] = $nextOpen->format('H:i');
+                    $data['next_open'] = $this->formatDateForLocale($nextOpen, 'H:i');
                 }
             } catch (\Exception $e) {
                 // Ignore nextOpen errors
@@ -166,7 +166,7 @@ class OpeningHoursColumn extends Column
             
             try {
                 if ($nextClose = $record->nextClose()) {
-                    $data['next_close'] = $nextClose->format('H:i');
+                    $data['next_close'] = $this->formatDateForLocale($nextClose, 'H:i');
                 }
             } catch (\Exception $e) {
                 // Ignore nextClose errors
@@ -177,7 +177,7 @@ class OpeningHoursColumn extends Column
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
-                'current_status' => 'Error loading hours',
+                'current_status' => __('filament-opening-hours::opening-hours.error_loading_hours'),
                 'is_open' => false,
                 'weekly_hours' => [],
                 'today_hours' => [],
@@ -201,6 +201,21 @@ class OpeningHoursColumn extends Column
         };
     }
 
+    protected function formatDateForLocale(\\Carbon\\Carbon $date, string $format): string
+    {
+        // Get current application locale
+        $locale = app()->getLocale();
+        
+        // Set Carbon locale based on application locale
+        $carbonLocale = match($locale) {
+            'ar' => 'ar',
+            'fr' => 'fr',
+            default => 'en',
+        };
+        
+        return $date->locale($carbonLocale)->translatedFormat($format);
+    }
+
     public function getCircularData(): array
     {
         $data = $this->getBusinessHoursData();
@@ -216,7 +231,7 @@ class OpeningHoursColumn extends Column
             $segments[] = [
                 'day' => ucfirst($day),
                 'is_open' => $isOpen,
-                'hours' => $data['weekly_hours'][$day]['formatted'] ?? 'Closed',
+                'hours' => $data['weekly_hours'][$day]['formatted'] ?? __('filament-opening-hours::opening-hours.closed_status'),
                 'angle' => $angle,
                 'color' => $isOpen ? '#10b981' : '#ef4444', // green : red
             ];

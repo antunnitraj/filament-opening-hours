@@ -33,12 +33,12 @@
                             <div class="text-right">
                                 @if ($data['is_open'] && isset($data['next_close']))
                                     <p class="text-sm text-gray-600 dark:text-gray-300">
-                                        <span class="font-medium">Closes:</span><br>
+                                        <span class="font-medium">{{ __('filament-opening-hours::opening-hours.closes_at') }}:</span><br>
                                         {{ $data['next_close'] }}
                                     </p>
                                 @elseif (!$data['is_open'] && isset($data['next_open']))
                                     <p class="text-sm text-gray-600 dark:text-gray-300">
-                                        <span class="font-medium">Opens:</span><br>
+                                        <span class="font-medium">{{ __('filament-opening-hours::opening-hours.opens_at') }}:</span><br>
                                         {{ $data['next_open'] }}
                                     </p>
                                 @endif
@@ -64,7 +64,7 @@
                 <!-- Weekly Schedule Section -->
                 <div class="space-y-3">
                     <h4 class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                        📅 Weekly Schedule
+                        📅 {{ __('filament-opening-hours::opening-hours.weekly_schedule') }}
                     </h4>
                     
                     <div class="grid gap-2">
@@ -82,7 +82,7 @@
                                     <span class="text-sm font-medium {{ $dayData['is_today'] ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white' }}">
                                         {{ $dayData['label'] }}
                                         @if ($dayData['is_today'])
-                                            <span class="ml-1 text-xs text-blue-600 dark:text-blue-400">(Today)</span>
+                                            <span class="ml-1 text-xs text-blue-600 dark:text-blue-400">({{ __('filament-opening-hours::opening-hours.today') }})</span>
                                         @endif
                                     </span>
                                 </div>
@@ -101,7 +101,7 @@
                 <!-- Exceptions Section -->
                 <div class="space-y-3">
                     <h4 class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                        🎯 Exceptions & Special Hours
+                        🎯 {{ __('filament-opening-hours::opening-hours.exceptions_special_hours') }}
                         <span class="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                             {{ count($data['exceptions']) }}
                         </span>
@@ -138,15 +138,15 @@
                                         </span>
                                         @if ($exception['date_mode'] === 'range')
                                             <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                                                📆 Range
+                                                📆 {{ __('filament-opening-hours::opening-hours.range_badge') }}
                                             </span>
                                         @elseif ($exception['date_mode'] === 'recurring')
                                             <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                                                🔄 Annual
+                                                🔄 {{ __('filament-opening-hours::opening-hours.annual_badge') }}
                                             </span>
                                         @else
                                             <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-                                                📅 Single
+                                                📅 {{ __('filament-opening-hours::opening-hours.single_badge') }}
                                             </span>
                                         @endif
                                     </div>
@@ -167,7 +167,7 @@
                                 <div class="ml-4 text-right">
                                     <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
                                         {{ $exception['type'] === 'special_hours' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
-                                        {{ ucfirst(str_replace('_', ' ', $exception['type'])) }}
+                                        {{ __('filament-opening-hours::opening-hours.' . $exception['type']) }}
                                     </span>
                                     @if ($exception['formatted_hours'] !== 'Closed')
                                         <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
@@ -187,7 +187,7 @@
             <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
                 <div class="flex items-center justify-between text-sm">
                     <span class="text-gray-600 dark:text-gray-400">
-                        Total operating days:
+                        {{ __('filament-opening-hours::opening-hours.operating_days') }}:
                     </span>
                     <span class="font-medium text-gray-900 dark:text-white">
                         {{ collect($data['weekly_hours'])->where('is_open', true)->count() }}/7
@@ -195,7 +195,7 @@
                 </div>
                 @if (isset($data['last_updated']))
                     <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        Last updated: {{ $data['last_updated'] }}
+                        {{ __('filament-opening-hours::opening-hours.last_updated') }}: {{ $data['last_updated'] }}
                     </div>
                 @endif
             </div>
@@ -207,7 +207,7 @@
                 <div class="flex items-center space-x-2">
                     <span class="text-red-500">⚠️</span>
                     <span class="text-sm font-medium text-red-800 dark:text-red-200">
-                        Error loading business hours
+                        {{ __('filament-opening-hours::opening-hours.error_loading_hours') }}
                     </span>
                 </div>
                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">
