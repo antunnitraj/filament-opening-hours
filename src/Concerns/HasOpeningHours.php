@@ -320,7 +320,7 @@ trait HasOpeningHours
         return $exceptions[$date] ?? null;
     }
 
-    protected function formatDateForLocale(\\Carbon\\Carbon $date, string $format): string
+    protected function formatDateForLocale(\Carbon\Carbon $date, string $format): string
     {
         // Get current application locale
         $locale = app()->getLocale();
