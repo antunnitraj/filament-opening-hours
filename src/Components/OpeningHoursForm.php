@@ -12,6 +12,7 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Html;
 use Filament\Schemas\Components\Section;
 
 /**
@@ -293,16 +294,17 @@ class OpeningHoursForm
                         }),
                 ])
                 ->schema([
-                    Placeholder::make('exceptions_list')
-                        ->label('')
-                        ->content(function ($get) {
+                    Html::make(function ($get) {
                             $exceptions = $get('opening_hours_exceptions') ?? [];
 
                             if (! is_array($exceptions) || empty($exceptions)) {
                                 $enabled = $get('opening_hours_enabled');
-                                $statusText = $enabled ? '' : __('filament-opening-hours::opening-hours.no_exceptions_configured_disabled');
+                                $statusText = $enabled ? '' : ' '.__('filament-opening-hours::opening-hours.no_exceptions_configured_disabled');
 
-                                return __('filament-opening-hours::opening-hours.no_exceptions_configured').$statusText;
+                                return '<div class="text-sm text-gray-600 dark:text-gray-400">'
+                                    .e(__('filament-opening-hours::opening-hours.no_exceptions_configured'))
+                                    .e($statusText)
+                                    .'</div>';
                             }
 
                             $output = [];
@@ -342,45 +344,62 @@ class OpeningHoursForm
                                         // Date range
                                         $startDate = \Carbon\Carbon::parse($exception['start_date'])->format('M j');
                                         $endDate = \Carbon\Carbon::parse($exception['end_date'])->format('M j, Y');
-                                        $dateFormatted = "{$startDate} - {$endDate}";
-                                        $badge = '📆 **Range**';
+                                        $dateFormatted = e("{$startDate} - {$endDate}");
+                                        $badge = '<span class="font-medium">📆 Range</span>';
                                         $processedRanges[] = "range_{$exception['start_date']}_to_{$exception['end_date']}";
                                     } elseif (isset($exception['recurring']) && $exception['recurring'] && isset($exception['date'])) {
                                         // Recurring annual
-                                        $dateFormatted = 'Every '.\Carbon\Carbon::parse($exception['date'])->format('F j');
-                                        $badge = '🔄 **Annual**';
+                                        $dateFormatted = e('Every '.\Carbon\Carbon::parse($exception['date'])->format('F j'));
+                                        $badge = '<span class="font-medium">🔄 Annual</span>';
                                     } elseif (strlen($date) === 5) {
                                         // MM-DD format (recurring)
-                                        $dateFormatted = 'Every '.\Carbon\Carbon::createFromFormat('m-d', $date)->format('F j');
-                                        $badge = '🔄 **Annual**';
+                                        $dateFormatted = e('Every '.\Carbon\Carbon::createFromFormat('m-d', $date)->format('F j'));
+                                        $badge = '<span class="font-medium">🔄 Annual</span>';
                                     } elseif (isset($exception['date'])) {
                                         // Single date
-                                        $dateFormatted = \Carbon\Carbon::parse($exception['date'])->format('M j, Y');
-                                        $badge = '📅 **Single**';
+                                        $dateFormatted = e(\Carbon\Carbon::parse($exception['date'])->format('M j, Y'));
+                                        $badge = '<span class="font-medium">📅 Single</span>';
                                     } else {
                                         // Fallback for date as key
-                                        $dateFormatted = \Carbon\Carbon::parse($date)->format('M j, Y');
-                                        $badge = '📅 **Single**';
+                                        $dateFormatted = e(\Carbon\Carbon::parse($date)->format('M j, Y'));
+                                        $badge = '<span class="font-medium">📅 Single</span>';
                                     }
                                 } catch (\Exception $e) {
                                     // Skip invalid dates
                                     continue;
                                 }
 
-                                $label = (isset($exception['label']) && $exception['label']) ? " - **{$exception['label']}**" : '';
-                                $hours = $exceptionType === 'special_hours' && isset($exception['hours']) && is_array($exception['hours']) && ! empty($exception['hours'])
-                                    ? ' ⏰ '.collect($exception['hours'])->map(function ($h) {
-                                        return is_array($h) && isset($h['from'], $h['to']) ? "{$h['from']}-{$h['to']}" : '';
-                                    })->filter()->join(', ')
-                                    : '';
-                                $note = (isset($exception['note']) && $exception['note']) ? "\n   *{$exception['note']}*" : '';
+                                $label = (isset($exception['label']) && $exception['label']) ? ' - <strong>'.e($exception['label']).'</strong>' : '';
+                                
+                                $hours = '';
+                                if ($exceptionType === 'special_hours' && isset($exception['hours']) && is_array($exception['hours']) && ! empty($exception['hours'])) {
+                                    $hoursList = collect($exception['hours'])->map(function ($h) {
+                                        return is_array($h) && isset($h['from'], $h['to']) ? e("{$h['from']}-{$h['to']}") : '';
+                                    })->filter()->join(', ');
+                                    $hours = $hoursList ? ' ⏰ '.$hoursList : '';
+                                }
+                                
+                                $note = (isset($exception['note']) && $exception['note']) ? '<br><span class="text-xs italic text-gray-500">'.e($exception['note']).'</span>' : '';
 
-                                $output[] = "{$icon} **{$dateFormatted}** {$badge}\n   📋 ".ucfirst(str_replace('_', ' ', $exceptionType))."{$label}{$hours}{$note}";
+                                $typeLabel = ucfirst(str_replace('_', ' ', $exceptionType));
+                                $output[] = '<div class="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">'
+                                    .'<div class="flex items-center gap-2">'
+                                    .'<span>'.$icon.'</span>'
+                                    .'<strong>'.$dateFormatted.'</strong>'
+                                    .$badge
+                                    .'</div>'
+                                    .'<div class="mt-1 text-sm text-gray-600 dark:text-gray-400">'
+                                    .'📋 '.e($typeLabel)
+                                    .$label
+                                    .$hours
+                                    .$note
+                                    .'</div>'
+                                    .'</div>';
                             }
 
-                            return implode("\n\n", $output);
+                            // Join array elements into a single string for Html::make()
+                            return '<div class="text-sm">'.implode('', $output).'</div>';
                         })
-                        ->extraAttributes(['class' => 'text-sm'])
                         ->columnSpanFull(),
                 ])
                 ->collapsible()
