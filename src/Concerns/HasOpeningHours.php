@@ -50,20 +50,20 @@ trait HasOpeningHours
         if ($this->openingHoursInstance === null) {
             $openingHours = $this->opening_hours ?? [];
             $exceptions = $this->opening_hours_exceptions ?? [];
-            
+
             // Convert our format to spatie/opening-hours format
             $spatieData = [];
-            
+
             // Process weekly hours
             $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             foreach ($days as $day) {
                 if (isset($openingHours[$day]) && is_array($openingHours[$day])) {
                     $dayData = $openingHours[$day];
-                    if (isset($dayData['enabled']) && $dayData['enabled'] && isset($dayData['hours']) && is_array($dayData['hours']) && !empty($dayData['hours'])) {
+                    if (isset($dayData['enabled']) && $dayData['enabled'] && isset($dayData['hours']) && is_array($dayData['hours']) && ! empty($dayData['hours'])) {
                         // Filter out empty hours and convert to spatie format
                         $validHours = collect($dayData['hours'])
-                            ->filter(fn($h) => isset($h['from'], $h['to']) && !empty($h['from']) && !empty($h['to']))
-                            ->map(fn($h) => "{$h['from']}-{$h['to']}")
+                            ->filter(fn ($h) => isset($h['from'], $h['to']) && ! empty($h['from']) && ! empty($h['to']))
+                            ->map(fn ($h) => "{$h['from']}-{$h['to']}")
                             ->toArray();
                         $spatieData[$day] = $validHours;
                     } else {
@@ -73,7 +73,7 @@ trait HasOpeningHours
                     $spatieData[$day] = []; // Closed
                 }
             }
-            
+
             // Process exceptions
             $processedExceptions = [];
             foreach ($exceptions as $key => $exception) {
@@ -81,19 +81,19 @@ trait HasOpeningHours
                 if (isset($exception['is_range_header']) || isset($exception['parent_range'])) {
                     continue;
                 }
-                
+
                 // Convert our exception format to spatie format
-                if (isset($exception['hours']) && !empty($exception['hours'])) {
-                    $hours = collect($exception['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->toArray();
+                if (isset($exception['hours']) && ! empty($exception['hours'])) {
+                    $hours = collect($exception['hours'])->map(fn ($h) => "{$h['from']}-{$h['to']}")->toArray();
                 } else {
                     $hours = []; // Closed
                 }
-                
+
                 $processedExceptions[$key] = $hours;
             }
-            
+
             $spatieData['exceptions'] = $processedExceptions;
-            
+
             try {
                 $this->openingHoursInstance = OpeningHours::create($spatieData);
                 // Increase day limit to avoid the 8-day error
@@ -108,7 +108,7 @@ trait HasOpeningHours
                     'friday' => [],
                     'saturday' => [],
                     'sunday' => [],
-                    'exceptions' => []
+                    'exceptions' => [],
                 ]);
                 $this->openingHoursInstance->setDayLimit(30);
             }
@@ -121,6 +121,7 @@ trait HasOpeningHours
     {
         try {
             $dateTime = $dateTime ?? now($this->getTimezone());
+
             return $this->openingHours()->isOpenAt($dateTime);
         } catch (\Exception $e) {
             return false;
@@ -129,7 +130,7 @@ trait HasOpeningHours
 
     public function isClosed(?Carbon $dateTime = null): bool
     {
-        return !$this->isOpen($dateTime);
+        return ! $this->isOpen($dateTime);
     }
 
     public function isOpenOn(string $day): bool
@@ -143,7 +144,7 @@ trait HasOpeningHours
 
     public function isClosedOn(string $day): bool
     {
-        return !$this->isOpenOn($day);
+        return ! $this->isOpenOn($day);
     }
 
     public function nextOpen(?Carbon $dateTime = null): ?Carbon
@@ -151,6 +152,7 @@ trait HasOpeningHours
         try {
             $dateTime = $dateTime ?? now($this->getTimezone());
             $nextOpen = $this->openingHours()->nextOpen($dateTime);
+
             return $nextOpen ? Carbon::instance($nextOpen) : null;
         } catch (\Exception $e) {
             return null;
@@ -162,6 +164,7 @@ trait HasOpeningHours
         try {
             $dateTime = $dateTime ?? now($this->getTimezone());
             $nextClose = $this->openingHours()->nextClose($dateTime);
+
             return $nextClose ? Carbon::instance($nextClose) : null;
         } catch (\Exception $e) {
             return null;
@@ -173,6 +176,7 @@ trait HasOpeningHours
         try {
             $dateTime = $dateTime ?? now($this->getTimezone());
             $previousOpen = $this->openingHours()->previousOpen($dateTime);
+
             return $previousOpen ? Carbon::instance($previousOpen) : null;
         } catch (\Exception $e) {
             return null;
@@ -184,6 +188,7 @@ trait HasOpeningHours
         try {
             $dateTime = $dateTime ?? now($this->getTimezone());
             $previousClose = $this->openingHours()->previousClose($dateTime);
+
             return $previousClose ? Carbon::instance($previousClose) : null;
         } catch (\Exception $e) {
             return null;
@@ -199,6 +204,7 @@ trait HasOpeningHours
             foreach ($dayHours as $timeRange) {
                 $hours[] = (string) $timeRange;
             }
+
             return $hours;
         } catch (\Exception $e) {
             return [];
@@ -214,6 +220,7 @@ trait HasOpeningHours
             foreach ($dateHours as $timeRange) {
                 $hours[] = (string) $timeRange;
             }
+
             return $hours;
         } catch (\Exception $e) {
             return [];
@@ -224,31 +231,32 @@ trait HasOpeningHours
     {
         try {
             // Check if business hours are enabled
-            if (isset($this->opening_hours_enabled) && !$this->opening_hours_enabled) {
+            if (isset($this->opening_hours_enabled) && ! $this->opening_hours_enabled) {
                 return __('filament-opening-hours::opening-hours.business_hours_disabled');
             }
-            
+
             $dateTime = $dateTime ?? now($this->getTimezone());
             $currentDay = strtolower($dateTime->format('l'));
-            
+
             // Check if we have any opening hours configured
             $openingHours = $this->opening_hours ?? [];
             if (empty($openingHours)) {
                 return __('filament-opening-hours::opening-hours.no_hours_configured');
             }
-            
+
             // Check if today has hours configured
-            if (!isset($openingHours[$currentDay]) || 
-                !isset($openingHours[$currentDay]['enabled']) || 
-                !$openingHours[$currentDay]['enabled'] ||
+            if (! isset($openingHours[$currentDay]) ||
+                ! isset($openingHours[$currentDay]['enabled']) ||
+                ! $openingHours[$currentDay]['enabled'] ||
                 empty($openingHours[$currentDay]['hours'])) {
                 return __('filament-opening-hours::opening-hours.closed_today');
             }
-            
+
             if ($this->isOpen($dateTime)) {
                 try {
                     $nextClose = $this->nextClose($dateTime);
-                    return $nextClose 
+
+                    return $nextClose
                         ? __('filament-opening-hours::opening-hours.open_until', ['time' => $this->formatDateForLocale($nextClose, 'H:i')])
                         : __('filament-opening-hours::opening-hours.open_status');
                 } catch (\Exception $e) {
@@ -258,14 +266,15 @@ trait HasOpeningHours
 
             try {
                 $nextOpen = $this->nextOpen($dateTime);
-                return $nextOpen 
+
+                return $nextOpen
                     ? __('filament-opening-hours::opening-hours.closed_until', ['time' => $this->formatDateForLocale($nextOpen, 'H:i')])
                     : __('filament-opening-hours::opening-hours.closed_status');
             } catch (\Exception $e) {
                 return __('filament-opening-hours::opening-hours.closed_status');
             }
         } catch (\Exception $e) {
-            return __('filament-opening-hours::opening-hours.status_unavailable') . ': ' . $e->getMessage();
+            return __('filament-opening-hours::opening-hours.status_unavailable').': '.$e->getMessage();
         }
     }
 
@@ -273,7 +282,7 @@ trait HasOpeningHours
     {
         return $this->timezone ?? config('filament-opening-hours.default_timezone', 'Africa/Algiers');
     }
-    
+
     public function debugOpeningHours(): array
     {
         return [
@@ -289,10 +298,10 @@ trait HasOpeningHours
         $exceptions = $this->opening_hours_exceptions ?? [];
         $exceptions[$date] = $hours;
         $this->opening_hours_exceptions = $exceptions;
-        
+
         // Reset the opening hours instance to force regeneration
         $this->openingHoursInstance = null;
-        
+
         return $this;
     }
 
@@ -301,22 +310,24 @@ trait HasOpeningHours
         $exceptions = $this->opening_hours_exceptions ?? [];
         unset($exceptions[$date]);
         $this->opening_hours_exceptions = $exceptions;
-        
+
         // Reset the opening hours instance to force regeneration
         $this->openingHoursInstance = null;
-        
+
         return $this;
     }
 
     public function hasException(string $date): bool
     {
         $exceptions = $this->opening_hours_exceptions ?? [];
+
         return array_key_exists($date, $exceptions);
     }
 
     public function getException(string $date): ?array
     {
         $exceptions = $this->opening_hours_exceptions ?? [];
+
         return $exceptions[$date] ?? null;
     }
 
@@ -324,14 +335,14 @@ trait HasOpeningHours
     {
         // Get current application locale
         $locale = app()->getLocale();
-        
+
         // Set Carbon locale based on application locale
-        $carbonLocale = match($locale) {
+        $carbonLocale = match ($locale) {
             'ar' => 'ar',
             'fr' => 'fr',
             default => 'en',
         };
-        
+
         return $date->locale($carbonLocale)->translatedFormat($format);
     }
 }

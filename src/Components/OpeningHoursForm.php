@@ -2,18 +2,17 @@
 
 namespace KaraOdin\FilamentOpeningHours\Components;
 
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Actions;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Placeholder;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 
 class OpeningHoursForm
 {
@@ -34,27 +33,29 @@ class OpeningHoursForm
                             ->default('Africa/Algiers')
                             ->helperText(__('filament-opening-hours::opening-hours.timezone_help'))
                             ->columnSpan(1),
-                            
+
                         Toggle::make('opening_hours_enabled')
                             ->label(__('filament-opening-hours::opening-hours.enable_business_hours'))
                             ->helperText(__('filament-opening-hours::opening-hours.enable_business_hours_help'))
                             ->default(true)
                             ->live()
-                            ->reactive()
                             ->afterStateUpdated(function ($state, $set, $get) {
                                 // Auto-enable if any hours are configured
-                                if (!$state) {
+                                if (! $state) {
                                     $openingHours = $get('opening_hours') ?? [];
                                     $hasHours = false;
-                                    
-                                    foreach ($openingHours as $dayData) {
-                                        if (isset($dayData['enabled']) && $dayData['enabled'] && 
-                                            isset($dayData['hours']) && !empty($dayData['hours'])) {
-                                            $hasHours = true;
-                                            break;
+
+                                    if (is_array($openingHours)) {
+                                        foreach ($openingHours as $dayData) {
+                                            if (is_array($dayData) &&
+                                                isset($dayData['enabled']) && $dayData['enabled'] &&
+                                                isset($dayData['hours']) && is_array($dayData['hours']) && ! empty($dayData['hours'])) {
+                                                $hasHours = true;
+                                                break;
+                                            }
                                         }
                                     }
-                                    
+
                                     if ($hasHours) {
                                         $set('opening_hours_enabled', true);
                                     }
@@ -67,8 +68,8 @@ class OpeningHoursForm
                 ->persistCollapsed(),
 
             Section::make(__('filament-opening-hours::opening-hours.weekly_schedule'))
-                ->description(fn ($get) => $get('opening_hours_enabled') 
-                    ? __('filament-opening-hours::opening-hours.weekly_schedule_description') 
+                ->description(fn ($get) => $get('opening_hours_enabled')
+                    ? __('filament-opening-hours::opening-hours.weekly_schedule_description')
                     : __('filament-opening-hours::opening-hours.weekly_schedule_description_disabled'))
                 ->icon('heroicon-o-calendar-days')
                 ->schema([
@@ -78,8 +79,8 @@ class OpeningHoursForm
                 ->persistCollapsed(),
 
             Section::make(__('filament-opening-hours::opening-hours.exceptions_special_hours'))
-                ->description(fn ($get) => $get('opening_hours_enabled') 
-                    ? __('filament-opening-hours::opening-hours.exceptions_special_hours_description') 
+                ->description(fn ($get) => $get('opening_hours_enabled')
+                    ? __('filament-opening-hours::opening-hours.exceptions_special_hours_description')
                     : __('filament-opening-hours::opening-hours.exceptions_special_hours_description_disabled'))
                 ->icon('heroicon-o-exclamation-triangle')
                 ->headerActions([
@@ -185,9 +186,8 @@ class OpeningHoursForm
                                         ->reorderableWithButtons()
                                         ->collapsible()
                                         ->defaultItems(0)
-                                        ->itemLabel(fn (array $state): ?string => 
-                                            isset($state['from'], $state['to']) 
-                                                ? "{$state['from']} - {$state['to']}" 
+                                        ->itemLabel(fn (array $state): ?string => isset($state['from'], $state['to'])
+                                                ? "{$state['from']} - {$state['to']}"
                                                 : __('filament-opening-hours::opening-hours.new_time_slot')
                                         ),
                                 ])
@@ -196,55 +196,73 @@ class OpeningHoursForm
                         ])
                         ->action(function (array $data, $get, $set) {
                             $exceptions = $get('opening_hours_exceptions') ?? [];
-                            
+
+                            if (! is_array($exceptions)) {
+                                $exceptions = [];
+                            }
+
                             $exceptionData = [
-                                'type' => $data['exception_type'],
+                                'type' => $data['exception_type'] ?? 'closed',
                                 'label' => $data['exception_label'] ?? '',
                                 'note' => $data['exception_note'] ?? '',
-                                'hours' => $data['exception_type'] === 'special_hours' ? ($data['exception_hours'] ?? []) : [],
-                                'date_mode' => $data['date_mode'],
+                                'hours' => ($data['exception_type'] ?? 'closed') === 'special_hours' ? ($data['exception_hours'] ?? []) : [],
+                                'date_mode' => $data['date_mode'] ?? 'single',
                             ];
 
-                            switch ($data['date_mode']) {
+                            switch ($data['date_mode'] ?? 'single') {
                                 case 'single':
-                                    $key = $data['exception_date'];
-                                    $exceptionData['date'] = $data['exception_date'];
-                                    $exceptions[$key] = $exceptionData;
-                                    break;
-                                    
-                                case 'range':
-                                    $startDate = \Carbon\Carbon::parse($data['start_date']);
-                                    $endDate = \Carbon\Carbon::parse($data['end_date']);
-                                    
-                                    // Create range key for display
-                                    $rangeKey = "range_{$data['start_date']}_to_{$data['end_date']}";
-                                    $exceptionData['start_date'] = $data['start_date'];
-                                    $exceptionData['end_date'] = $data['end_date'];
-                                    $exceptionData['is_range'] = true;
-                                    
-                                    // Add individual dates for spatie/opening-hours compatibility
-                                    $currentDate = $startDate->copy();
-                                    while ($currentDate->lte($endDate)) {
-                                        $dateKey = $currentDate->format('Y-m-d');
-                                        $exceptions[$dateKey] = array_merge($exceptionData, [
-                                            'date' => $dateKey,
-                                            'parent_range' => $rangeKey,
-                                        ]);
-                                        $currentDate->addDay();
+                                    if (isset($data['exception_date'])) {
+                                        $key = $data['exception_date'];
+                                        $exceptionData['date'] = $data['exception_date'];
+                                        $exceptions[$key] = $exceptionData;
                                     }
-                                    
-                                    // Also store the range info for display
-                                    $exceptions[$rangeKey] = array_merge($exceptionData, [
-                                        'is_range_header' => true,
-                                    ]);
                                     break;
-                                    
+
+                                case 'range':
+                                    if (isset($data['start_date']) && isset($data['end_date'])) {
+                                        try {
+                                            $startDate = \Carbon\Carbon::parse($data['start_date']);
+                                            $endDate = \Carbon\Carbon::parse($data['end_date']);
+
+                                            // Create range key for display
+                                            $rangeKey = "range_{$data['start_date']}_to_{$data['end_date']}";
+                                            $exceptionData['start_date'] = $data['start_date'];
+                                            $exceptionData['end_date'] = $data['end_date'];
+                                            $exceptionData['is_range'] = true;
+
+                                            // Add individual dates for spatie/opening-hours compatibility
+                                            $currentDate = $startDate->copy();
+                                            while ($currentDate->lte($endDate)) {
+                                                $dateKey = $currentDate->format('Y-m-d');
+                                                $exceptions[$dateKey] = array_merge($exceptionData, [
+                                                    'date' => $dateKey,
+                                                    'parent_range' => $rangeKey,
+                                                ]);
+                                                $currentDate->addDay();
+                                            }
+
+                                            // Also store the range info for display
+                                            $exceptions[$rangeKey] = array_merge($exceptionData, [
+                                                'is_range_header' => true,
+                                            ]);
+                                        } catch (\Exception $e) {
+                                            // Skip invalid date range
+                                        }
+                                    }
+                                    break;
+
                                 case 'recurring':
-                                    $recurringDate = \Carbon\Carbon::parse($data['recurring_date']);
-                                    $key = $recurringDate->format('m-d'); // MM-DD format for recurring
-                                    $exceptionData['date'] = $data['recurring_date'];
-                                    $exceptionData['recurring'] = true;
-                                    $exceptions[$key] = $exceptionData;
+                                    if (isset($data['recurring_date'])) {
+                                        try {
+                                            $recurringDate = \Carbon\Carbon::parse($data['recurring_date']);
+                                            $key = $recurringDate->format('m-d'); // MM-DD format for recurring
+                                            $exceptionData['date'] = $data['recurring_date'];
+                                            $exceptionData['recurring'] = true;
+                                            $exceptions[$key] = $exceptionData;
+                                        } catch (\Exception $e) {
+                                            // Skip invalid recurring date
+                                        }
+                                    }
                                     break;
                             }
 
@@ -256,29 +274,34 @@ class OpeningHoursForm
                         ->label('')
                         ->content(function ($get) {
                             $exceptions = $get('opening_hours_exceptions') ?? [];
-                            
-                            if (empty($exceptions)) {
+
+                            if (! is_array($exceptions) || empty($exceptions)) {
                                 $enabled = $get('opening_hours_enabled');
                                 $statusText = $enabled ? '' : __('filament-opening-hours::opening-hours.no_exceptions_configured_disabled');
-                                
-                                return __('filament-opening-hours::opening-hours.no_exceptions_configured') . $statusText;
+
+                                return __('filament-opening-hours::opening-hours.no_exceptions_configured').$statusText;
                             }
 
                             $output = [];
                             $processedRanges = [];
-                            
+
                             foreach ($exceptions as $date => $exception) {
+                                if (! is_array($exception)) {
+                                    continue;
+                                }
+
                                 // Skip individual dates that are part of a range (already displayed)
                                 if (isset($exception['parent_range']) && in_array($exception['parent_range'], $processedRanges)) {
                                     continue;
                                 }
-                                
+
                                 // Skip range headers (we'll process them separately)
                                 if (isset($exception['is_range_header'])) {
                                     continue;
                                 }
 
-                                $icon = match($exception['type']) {
+                                $exceptionType = $exception['type'] ?? 'closed';
+                                $icon = match ($exceptionType) {
                                     'holiday' => '🎉',
                                     'closed' => '🔒',
                                     'special_hours' => '⏰',
@@ -290,34 +313,46 @@ class OpeningHoursForm
                                 $dateFormatted = '';
                                 $badge = '';
 
-                                if (isset($exception['is_range']) && $exception['is_range']) {
-                                    // Date range
-                                    $startDate = \Carbon\Carbon::parse($exception['start_date'])->format('M j');
-                                    $endDate = \Carbon\Carbon::parse($exception['end_date'])->format('M j, Y');
-                                    $dateFormatted = "{$startDate} - {$endDate}";
-                                    $badge = '📆 **Range**';
-                                    $processedRanges[] = "range_{$exception['start_date']}_to_{$exception['end_date']}";
-                                } elseif (isset($exception['recurring']) && $exception['recurring']) {
-                                    // Recurring annual
-                                    $dateFormatted = "Every " . \Carbon\Carbon::parse($exception['date'])->format('F j');
-                                    $badge = '🔄 **Annual**';
-                                } elseif (strlen($date) === 5) {
-                                    // MM-DD format (recurring)
-                                    $dateFormatted = "Every " . \Carbon\Carbon::createFromFormat('m-d', $date)->format('F j');
-                                    $badge = '🔄 **Annual**';
-                                } else {
-                                    // Single date
-                                    $dateFormatted = \Carbon\Carbon::parse($date)->format('M j, Y');
-                                    $badge = '📅 **Single**';
+                                try {
+                                    if (isset($exception['is_range']) && $exception['is_range'] &&
+                                        isset($exception['start_date']) && isset($exception['end_date'])) {
+                                        // Date range
+                                        $startDate = \Carbon\Carbon::parse($exception['start_date'])->format('M j');
+                                        $endDate = \Carbon\Carbon::parse($exception['end_date'])->format('M j, Y');
+                                        $dateFormatted = "{$startDate} - {$endDate}";
+                                        $badge = '📆 **Range**';
+                                        $processedRanges[] = "range_{$exception['start_date']}_to_{$exception['end_date']}";
+                                    } elseif (isset($exception['recurring']) && $exception['recurring'] && isset($exception['date'])) {
+                                        // Recurring annual
+                                        $dateFormatted = 'Every '.\Carbon\Carbon::parse($exception['date'])->format('F j');
+                                        $badge = '🔄 **Annual**';
+                                    } elseif (strlen($date) === 5) {
+                                        // MM-DD format (recurring)
+                                        $dateFormatted = 'Every '.\Carbon\Carbon::createFromFormat('m-d', $date)->format('F j');
+                                        $badge = '🔄 **Annual**';
+                                    } elseif (isset($exception['date'])) {
+                                        // Single date
+                                        $dateFormatted = \Carbon\Carbon::parse($exception['date'])->format('M j, Y');
+                                        $badge = '📅 **Single**';
+                                    } else {
+                                        // Fallback for date as key
+                                        $dateFormatted = \Carbon\Carbon::parse($date)->format('M j, Y');
+                                        $badge = '📅 **Single**';
+                                    }
+                                } catch (\Exception $e) {
+                                    // Skip invalid dates
+                                    continue;
                                 }
 
-                                $label = $exception['label'] ? " - **{$exception['label']}**" : '';
-                                $hours = $exception['type'] === 'special_hours' && !empty($exception['hours'])
-                                    ? ' ⏰ ' . collect($exception['hours'])->map(fn($h) => "{$h['from']}-{$h['to']}")->join(', ')
+                                $label = (isset($exception['label']) && $exception['label']) ? " - **{$exception['label']}**" : '';
+                                $hours = $exceptionType === 'special_hours' && isset($exception['hours']) && is_array($exception['hours']) && ! empty($exception['hours'])
+                                    ? ' ⏰ '.collect($exception['hours'])->map(function ($h) {
+                                        return is_array($h) && isset($h['from'], $h['to']) ? "{$h['from']}-{$h['to']}" : '';
+                                    })->filter()->join(', ')
                                     : '';
-                                $note = $exception['note'] ? "\n   *{$exception['note']}*" : '';
+                                $note = (isset($exception['note']) && $exception['note']) ? "\n   *{$exception['note']}*" : '';
 
-                                $output[] = "{$icon} **{$dateFormatted}** {$badge}\n   📋 " . ucfirst(str_replace('_', ' ', $exception['type'])) . "{$label}{$hours}{$note}";
+                                $output[] = "{$icon} **{$dateFormatted}** {$badge}\n   📋 ".ucfirst(str_replace('_', ' ', $exceptionType))."{$label}{$hours}{$note}";
                             }
 
                             return implode("\n\n", $output);
@@ -393,20 +428,29 @@ class OpeningHoursForm
                                             ->content(function ($get) {
                                                 $from = $get('from');
                                                 $to = $get('to');
-                                                
-                                                if (!$from || !$to) {
+
+                                                if (! $from || ! $to || ! is_string($from) || ! is_string($to)) {
                                                     return '-';
                                                 }
 
-                                                $fromTime = \Carbon\Carbon::createFromFormat('H:i', $from);
-                                                $toTime = \Carbon\Carbon::createFromFormat('H:i', $to);
-                                                
-                                                if ($toTime->lessThan($fromTime)) {
-                                                    $toTime->addDay();
+                                                try {
+                                                    $fromTime = \Carbon\Carbon::createFromFormat('H:i', $from);
+                                                    $toTime = \Carbon\Carbon::createFromFormat('H:i', $to);
+
+                                                    if (! $fromTime || ! $toTime) {
+                                                        return '-';
+                                                    }
+
+                                                    if ($toTime->lessThan($fromTime)) {
+                                                        $toTime->addDay();
+                                                    }
+
+                                                    $duration = $fromTime->diffForHumans($toTime, true);
+
+                                                    return $duration;
+                                                } catch (\Exception $e) {
+                                                    return '-';
                                                 }
-                                                
-                                                $duration = $fromTime->diffForHumans($toTime, true);
-                                                return $duration;
                                             })
                                             ->columnSpan(1),
                                     ]),
@@ -414,10 +458,9 @@ class OpeningHoursForm
                                 ->addActionLabel(__('filament-opening-hours::opening-hours.add_time_slot'))
                                 ->reorderableWithButtons()
                                 ->defaultItems(0)
-                                ->itemLabel(fn (array $state): ?string => 
-                                    isset($state['from'], $state['to']) 
-                                        ? "⏰ {$state['from']} - {$state['to']}" 
-                                        : '➕ ' . __('filament-opening-hours::opening-hours.new_time_slot')
+                                ->itemLabel(fn (array $state): ?string => isset($state['from'], $state['to'])
+                                        ? "⏰ {$state['from']} - {$state['to']}"
+                                        : '➕ '.__('filament-opening-hours::opening-hours.new_time_slot')
                                 )
                                 ->collapsed(false),
                         ])

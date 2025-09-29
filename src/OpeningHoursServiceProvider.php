@@ -24,7 +24,7 @@ class OpeningHoursServiceProvider extends PackageServiceProvider
     {
         // Register assets
         FilamentAsset::register([
-            Css::make('filament-opening-hours', __DIR__ . '/../resources/css/opening-hours.css')
+            Css::make('filament-opening-hours', __DIR__.'/../resources/css/opening-hours.css')
                 ->loadedOnRequest(),
         ], 'karaodin/filament-opening-hours');
     }

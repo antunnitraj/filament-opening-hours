@@ -2,16 +2,16 @@
 
 namespace KaraOdin\FilamentOpeningHours\Components;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 
 class OpeningHoursField extends Field
 {
@@ -41,7 +41,7 @@ class OpeningHoursField extends Field
                                 Select::make('type')
                                     ->options([
                                         'closed' => 'Closed',
-                                        'holiday' => 'Holiday', 
+                                        'holiday' => 'Holiday',
                                         'special_hours' => 'Special Hours',
                                         'maintenance' => 'Maintenance',
                                     ])
@@ -74,9 +74,8 @@ class OpeningHoursField extends Field
                                     ->reorderableWithButtons()
                                     ->collapsible()
                                     ->defaultItems(0)
-                                    ->itemLabel(fn (array $state): ?string => 
-                                        isset($state['from'], $state['to']) 
-                                            ? "{$state['from']} - {$state['to']}" 
+                                    ->itemLabel(fn (array $state): ?string => isset($state['from'], $state['to'])
+                                            ? "{$state['from']} - {$state['to']}"
                                             : null
                                     ),
                             ])->visible(fn ($get) => $get('type') === 'special_hours'),
@@ -85,9 +84,8 @@ class OpeningHoursField extends Field
                         ->reorderableWithButtons()
                         ->collapsible()
                         ->defaultItems(0)
-                        ->itemLabel(fn (array $state): ?string => 
-                            isset($state['date']) 
-                                ? ($state['date'] . ($state['note'] ? " ({$state['note']})" : ''))
+                        ->itemLabel(fn (array $state): ?string => isset($state['date'])
+                                ? ($state['date'].($state['note'] ? " ({$state['note']})" : ''))
                                 : 'New Exception'
                         ),
                 ]),
@@ -98,7 +96,7 @@ class OpeningHoursField extends Field
     {
         $days = [
             'monday' => 'Monday',
-            'tuesday' => 'Tuesday', 
+            'tuesday' => 'Tuesday',
             'wednesday' => 'Wednesday',
             'thursday' => 'Thursday',
             'friday' => 'Friday',
@@ -135,9 +133,8 @@ class OpeningHoursField extends Field
                             ->addActionLabel('Add Time Slot')
                             ->reorderableWithButtons()
                             ->defaultItems(0)
-                            ->itemLabel(fn (array $state): ?string => 
-                                isset($state['from'], $state['to']) 
-                                    ? "{$state['from']} - {$state['to']}" 
+                            ->itemLabel(fn (array $state): ?string => isset($state['from'], $state['to'])
+                                    ? "{$state['from']} - {$state['to']}"
                                     : null
                             ),
                     ])

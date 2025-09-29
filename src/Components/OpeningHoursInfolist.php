@@ -2,32 +2,34 @@
 
 namespace KaraOdin\FilamentOpeningHours\Components;
 
-use Filament\Infolists\Components\Entry;
 use Closure;
+use Filament\Infolists\Components\Entry;
 
 class OpeningHoursInfolist extends Entry
 {
     protected string $view = 'filament-opening-hours::components.opening-hours-infolist';
 
-    protected bool | Closure $showExceptions = true;
-    protected bool | Closure $showStatus = true;
-    protected string | Closure | null $timezone = null;
+    protected bool|Closure $showExceptions = true;
 
-    public function showExceptions(bool | Closure $condition = true): static
+    protected bool|Closure $showStatus = true;
+
+    protected string|Closure|null $timezone = null;
+
+    public function showExceptions(bool|Closure $condition = true): static
     {
         $this->showExceptions = $condition;
 
         return $this;
     }
 
-    public function showStatus(bool | Closure $condition = true): static
+    public function showStatus(bool|Closure $condition = true): static
     {
         $this->showStatus = $condition;
 
         return $this;
     }
 
-    public function timezone(string | Closure | null $timezone): static
+    public function timezone(string|Closure|null $timezone): static
     {
         $this->timezone = $timezone;
 
@@ -52,8 +54,8 @@ class OpeningHoursInfolist extends Entry
     public function getFormattedOpeningHours(): array
     {
         $record = $this->getRecord();
-        
-        if (!method_exists($record, 'openingHours')) {
+
+        if (! method_exists($record, 'openingHours')) {
             return [];
         }
 
@@ -84,8 +86,8 @@ class OpeningHoursInfolist extends Entry
     public function getCurrentStatus(): string
     {
         $record = $this->getRecord();
-        
-        if (!method_exists($record, 'getCurrentStatus')) {
+
+        if (! method_exists($record, 'getCurrentStatus')) {
             return 'Unknown';
         }
 
@@ -99,8 +101,8 @@ class OpeningHoursInfolist extends Entry
     public function getExceptions(): array
     {
         $record = $this->getRecord();
-        
-        if (!isset($record->opening_hours_exceptions) || !is_array($record->opening_hours_exceptions)) {
+
+        if (! isset($record->opening_hours_exceptions) || ! is_array($record->opening_hours_exceptions)) {
             return [];
         }
 
