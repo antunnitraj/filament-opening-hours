@@ -381,8 +381,8 @@ php artisan tenants:migrate --path=database/migrations/tenant
 ## 🚀 Requirements
 
 - PHP 8.1+
-- Laravel 10.0+
-- Filament 3.0+
+- Laravel 11.28+
+- Filament 4.0+
 
 ## 🧪 Testing
 

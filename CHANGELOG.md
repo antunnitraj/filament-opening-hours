@@ -2,6 +2,47 @@
 
 All notable changes to `filament-opening-hours` will be documented in this file.
 
+## v3.0.0 - 2025-01-XX
+
+### 🎉 MAJOR UPDATE: Filament v4 Support!
+
+This is a **breaking change** that adds support for Filament v4 and drops support for Filament v3.
+
+#### ⬆️ Upgrade Requirements
+- **BREAKING:** Now requires **Laravel 11.28+** (previously Laravel 10.0+)
+- **BREAKING:** Now requires **Filament 4.0+** (previously Filament 3.0+)
+- **BREAKING:** Now requires **Livewire v3** (automatically included with Filament v4)
+- Still supports PHP 8.1+
+
+#### ✨ What's New
+- Full compatibility with Filament v4
+- Updated to work with the latest Livewire v3 features
+- Modernized codebase with v4 best practices
+- All components work seamlessly with Filament v4 panels
+
+#### 🔧 Technical Changes
+- Updated Livewire entangle syntax: `$wire.$entangle()` → `$wire.entangle()`
+- Asset registration updated for Filament v4 compatibility
+- All components verified to work with v4 base classes
+- Dev dependencies updated for Laravel 11/Filament v4
+
+#### 🚀 Migration Guide
+To upgrade from v2.x to v3.x:
+1. Ensure you're running Laravel 11.28+ and Filament 4.0+
+2. Update your composer.json: `"karaodin/filament-opening-hours": "^3.0"`
+3. Run `composer update`
+4. No code changes needed - all APIs remain the same!
+
+#### 📦 For New Installations
+```bash
+composer require karaodin/filament-opening-hours
+```
+
+Requirements:
+- PHP 8.1+
+- Laravel 11.28+
+- Filament 4.0+
+
 ## v2.1.0 - 2025-07-20
 
 ### ✨ Enhanced Exception Management with Date Ranges
