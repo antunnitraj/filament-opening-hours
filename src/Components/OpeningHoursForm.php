@@ -2,7 +2,7 @@
 
 namespace KaraOdin\FilamentOpeningHours\Components;
 
-use Filament\Forms\Components\Actions;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
@@ -107,7 +107,7 @@ class OpeningHoursForm
                     : __('filament-opening-hours::opening-hours.exceptions_special_hours_description_disabled'))
                 ->icon('heroicon-o-exclamation-triangle')
                 ->headerActions([
-                    Actions\Action::make('add_exception')
+                    Action::make('add_exception')
                         ->label(__('filament-opening-hours::opening-hours.add_exception'))
                         ->icon('heroicon-o-plus')
                         ->color('primary')
