@@ -2,32 +2,34 @@
 
 namespace KaraOdin\FilamentOpeningHours\Components;
 
-use Filament\Tables\Columns\Column;
 use Closure;
+use Filament\Tables\Columns\Column;
 
 class OpeningHoursTable extends Column
 {
     protected string $view = 'filament-opening-hours::components.opening-hours-table';
 
-    protected bool | Closure $showStatus = true;
-    protected bool | Closure $showToday = true;
-    protected string | Closure | null $timezone = null;
+    protected bool|Closure $showStatus = true;
 
-    public function showStatus(bool | Closure $condition = true): static
+    protected bool|Closure $showToday = true;
+
+    protected string|Closure|null $timezone = null;
+
+    public function showStatus(bool|Closure $condition = true): static
     {
         $this->showStatus = $condition;
 
         return $this;
     }
 
-    public function showToday(bool | Closure $condition = true): static
+    public function showToday(bool|Closure $condition = true): static
     {
         $this->showToday = $condition;
 
         return $this;
     }
 
-    public function timezone(string | Closure | null $timezone): static
+    public function timezone(string|Closure|null $timezone): static
     {
         $this->timezone = $timezone;
 
@@ -52,8 +54,8 @@ class OpeningHoursTable extends Column
     public function getFormattedState(): string
     {
         $record = $this->getRecord();
-        
-        if (!method_exists($record, 'openingHours')) {
+
+        if (! method_exists($record, 'openingHours')) {
             return 'Not configured';
         }
 
@@ -65,17 +67,17 @@ class OpeningHoursTable extends Column
             if ($this->getShowToday()) {
                 $today = strtolower(now($this->getTimezone())->format('l'));
                 $todayHours = $record->getOpeningHoursForDay($today);
-                
+
                 if (empty($todayHours)) {
                     return 'Closed today';
                 }
 
-                return 'Today: ' . implode(', ', $todayHours);
+                return 'Today: '.implode(', ', $todayHours);
             }
 
             // Default: show if currently open/closed
             return $record->isOpen() ? 'Open' : 'Closed';
-            
+
         } catch (\Exception $e) {
             return 'Error loading hours';
         }
@@ -84,8 +86,8 @@ class OpeningHoursTable extends Column
     public function getStatusColor(): string
     {
         $record = $this->getRecord();
-        
-        if (!method_exists($record, 'isOpen')) {
+
+        if (! method_exists($record, 'isOpen')) {
             return 'gray';
         }
 
