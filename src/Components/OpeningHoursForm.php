@@ -14,8 +14,31 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 
+/**
+ * OpeningHoursForm provides a comprehensive schema for managing business opening hours.
+ *
+ * Compatible with Filament v4. Uses the Schemas namespace components for layout.
+ *
+ * Features:
+ * - Weekly schedule management with time slots
+ * - Exception handling for holidays and special dates
+ * - Timezone support
+ * - Global enable/disable toggle
+ * - Range and recurring date exceptions
+ *
+ * @since 3.0.0 Updated for Filament v4 compatibility
+ */
 class OpeningHoursForm
 {
+    /**
+     * Generate the complete form schema for opening hours management.
+     *
+     * Returns a Filament v4 compatible schema with defensive coding practices.
+     * Uses Schemas namespace components (Section, Grid, Group) and Forms
+     * components (Toggle, TimePicker, etc.).
+     *
+     * @return array<\Filament\Schemas\Schema> Form schema components
+     */
     public static function schema(): array
     {
         return [

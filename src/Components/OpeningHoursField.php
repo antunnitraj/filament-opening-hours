@@ -13,6 +13,14 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 
+/**
+ * OpeningHoursField provides a reusable field component for opening hours.
+ *
+ * Compatible with Filament v4. Extends the base Field class and uses
+ * Schemas namespace components for layout structure.
+ *
+ * @since 3.0.0 Updated for Filament v4 compatibility
+ */
 class OpeningHoursField extends Field
 {
     protected string $view = 'filament-opening-hours::components.opening-hours-field';
