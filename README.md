@@ -20,10 +20,20 @@ A **premium-quality** Filament plugin for managing business opening hours with a
 
 ## 🚀 Installation
 
+Append this to your composer.json:
+```json
+"repositories": [
+    {
+        "type": "vcs",
+        "url": "https://github.com/antunnitraj/filament-opening-hours"
+    }
+]
+```
+
 You can install the package via composer:
 
 ```bash
-composer require karaodin/filament-opening-hours
+composer require karaodin/filament-opening-hours:dev-main
 ```
 
 You can publish the config file with:
