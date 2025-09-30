@@ -44,6 +44,7 @@ class OpeningHoursForm
     {
         return [
             Section::make(__('filament-opening-hours::opening-hours.business_hours_configuration'))
+                ->hidden()
                 ->description(__('filament-opening-hours::opening-hours.business_hours_configuration_description'))
                 ->icon('heroicon-o-clock')
                 ->schema([
@@ -54,7 +55,7 @@ class OpeningHoursForm
                                 return [$timezone => str_replace('_', ' ', $timezone)];
                             })->toArray())
                             ->searchable()
-                            ->default('Africa/Algiers')
+                            ->default(config('filament-opening-hours.default_timezone'))
                             ->helperText(__('filament-opening-hours::opening-hours.timezone_help'))
                             ->columnSpan(1),
 
@@ -98,11 +99,10 @@ class OpeningHoursForm
                 ->icon('heroicon-o-calendar-days')
                 ->schema([
                     Grid::make(1)->schema(self::getDayComponents()),
-                ])
-                ->collapsible()
-                ->persistCollapsed(),
+                ]),
 
             Section::make(__('filament-opening-hours::opening-hours.exceptions_special_hours'))
+                ->hidden()
                 ->description(fn ($get) => $get('opening_hours_enabled')
                     ? __('filament-opening-hours::opening-hours.exceptions_special_hours_description')
                     : __('filament-opening-hours::opening-hours.exceptions_special_hours_description_disabled'))
@@ -370,7 +370,7 @@ class OpeningHoursForm
                                 }
 
                                 $label = (isset($exception['label']) && $exception['label']) ? ' - <strong>'.e($exception['label']).'</strong>' : '';
-                                
+
                                 $hours = '';
                                 if ($exceptionType === 'special_hours' && isset($exception['hours']) && is_array($exception['hours']) && ! empty($exception['hours'])) {
                                     $hoursList = collect($exception['hours'])->map(function ($h) {
@@ -378,7 +378,7 @@ class OpeningHoursForm
                                     })->filter()->join(', ');
                                     $hours = $hoursList ? ' ⏰ '.$hoursList : '';
                                 }
-                                
+
                                 $note = (isset($exception['note']) && $exception['note']) ? '<br><span class="text-xs italic text-gray-500">'.e($exception['note']).'</span>' : '';
 
                                 $typeLabel = ucfirst(str_replace('_', ' ', $exceptionType));
@@ -434,10 +434,11 @@ class OpeningHoursForm
 
                         Group::make([
                             Repeater::make("opening_hours.{$key}.hours")
+                                ->hiddenLabel()
                                 ->schema([
                                     Grid::make(3)->schema([
                                         TimePicker::make('from')
-                                            ->label('From')
+                                            ->label(__('filament-opening-hours::opening-hours.from'))
                                             ->required()
                                             ->seconds(false)
                                             ->displayFormat('H:i')
@@ -503,16 +504,12 @@ class OpeningHoursForm
                                 ->itemLabel(fn (array $state): ?string => isset($state['from'], $state['to'])
                                         ? "⏰ {$state['from']} - {$state['to']}"
                                         : '➕ '.__('filament-opening-hours::opening-hours.new_time_slot')
-                                )
-                                ->collapsed(false),
+                                ),
                         ])
                             ->columnSpan(10)
                             ->visible(fn ($get) => $get("opening_hours.{$key}.enabled")),
                     ]),
-                ])
-                ->collapsible()
-                ->persistCollapsed()
-                ->collapsed(true);
+                ]);
         }
 
         return $components;
